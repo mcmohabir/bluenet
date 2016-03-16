@@ -324,6 +324,8 @@ void Crownstone::setup() {
 	// configuration has to be done after the stack was created!
 	configure();
 
+	nrf_delay_ms(3000);
+
 	_stack->onConnect([&](uint16_t conn_handle) {
 		LOGi("onConnect...");
 		// todo this signature needs to change
