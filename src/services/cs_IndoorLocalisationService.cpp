@@ -138,6 +138,9 @@ void IndoorLocalizationService::addSignalStrengthCharacteristic() {
 	_rssiCharac->setName(BLE_CHAR_RSSI);
 	_rssiCharac->setDefaultValue(1);
 	_rssiCharac->setNotifies(true);
+#ifdef PWM_ON_RSSI
+	 _averageRssi = -50; // Start with something..
+#endif
 }
 
 void IndoorLocalizationService::addScanControlCharacteristic() {
@@ -414,6 +417,28 @@ void IndoorLocalizationService::setRSSILevel(int8_t RSSILevel) {
 #endif
 	if (_rssiCharac) {
 		*_rssiCharac = RSSILevel;
+#ifdef PWM_ON_RSSI
+		//! avg = 0.4*rssi + (1-0.4)*avg
+		_averageRssi = (RSSILevel*4 + _averageRssi*6) / 10;
+//		LOGd("RSSI: %d avg: %d", RSSILevel, _averageRssi);
+
+//		//! Map [-90, -40] to [0, 255]
+//		int16_t pwm = (_averageRssi + 90) * 25 / 5;
+//		if (pwm < 0) {
+//			pwm = 0;
+//		}
+//		if (pwm > 255) {
+//			pwm = 255;
+//		}
+//		PWM::getInstance().setValue(0, pwm);
+
+		if (_averageRssi > -70 && PWM::getInstance().getValue(0) < 1) {
+			PWM::getInstance().setValue(0, 255);
+		}
+		if (_averageRssi < -80 && PWM::getInstance().getValue(0) > 0) {
+			PWM::getInstance().setValue(0, 0);
+		}
+#endif
 	}
 }
 

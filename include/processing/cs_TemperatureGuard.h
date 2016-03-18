@@ -23,6 +23,7 @@ public:
 	}
 	void tick() {
 		if (getTemperature() > TEMPERATURE_MAX) {
+			LOGd("Temperature too high");
 			// Make sure pwm can't be set anymore
 			PWM::getInstance().deinit();
 			// Switch off all channels

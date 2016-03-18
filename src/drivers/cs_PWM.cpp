@@ -149,7 +149,7 @@ uint32_t PWM::deinit() {
 
 void PWM::setValue(uint8_t channel, uint32_t value) {
 	if (!_initialized) {
-		LOGw("Cannot set pwm: not initialized");
+		LOGd("Cannot set pwm: not initialized");
 		return;
 	}
 	LOGd("set pwm channel %i to %i", channel, value);

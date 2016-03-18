@@ -19,6 +19,7 @@
 #include <drivers/cs_Storage.h>
 
 #define LOCALIZATION_SERVICE_UPDATE_FREQUENCY 10 // hz
+//#define PWM_ON_RSSI
 
 /* Struct used by the <IndoorLocalisationService> to store elements
  */
@@ -102,6 +103,10 @@ private:
 	
 	bool _initialized;
 	bool _scanMode;
+
+#ifdef PWM_ON_RSSI
+	int16_t _averageRssi;
+#endif
 
 	ScanResult* _scanResult;
 	TrackedDeviceList* _trackedDeviceList;

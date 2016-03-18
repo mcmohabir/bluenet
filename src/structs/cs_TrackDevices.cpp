@@ -37,7 +37,7 @@ void TrackedDeviceList::update(const uint8_t * addrs_ptr, int8_t rssi) {
 		if (memcmp(addrs_ptr, _buffer->list[i].addr, BLE_GAP_ADDR_LEN) == 0) {
 			if (rssi >= _buffer->list[i].rssiThreshold) {
 				_buffer->counters[i] = 0;
-				LOGd("Tracked device present nearby (%i >= %i)", rssi, _buffer->list[i].rssiThreshold);
+//				LOGd("Tracked device present nearby (%i >= %i)", rssi, _buffer->list[i].rssiThreshold);
 			} else {
 //				LOGd("Tracked device found, but not nearby (%i < %i)", rssi, _buffer->list[i].rssiThreshold);
 			}
