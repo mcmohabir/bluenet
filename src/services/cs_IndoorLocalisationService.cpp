@@ -97,22 +97,24 @@ void IndoorLocalizationService::tick() {
 		_initialized = true;
 	}
 
-	if (!_trackMode) return;
+	if (_trackMode) {
+		// This function checks the counter for each device
+		// If no device is nearby, turn off the light
+		bool deviceNearby = false;
+		if (_trackedDeviceList != NULL) {
+			deviceNearby = (_trackedDeviceList->isNearby() == TDL_IS_NEARBY);
+		}
 
-	// This function checks the counter for each device
-	// If no device is nearby, turn off the light
-	bool deviceNearby = false;
-	if (_trackedDeviceList != NULL) {
-		deviceNearby = (_trackedDeviceList->isNearby() == TDL_IS_NEARBY);
+		// Change PWM only on change of nearby state
+		if (deviceNearby && !_trackIsNearby) {
+	//	if (deviceNearby && PWM::getInstance().getValue(0) != 255) {
+			PWM::getInstance().setValue(0, 255);
+		} else if (!deviceNearby && _trackIsNearby) {
+	//	} else if (!deviceNearby && PWM::getInstance().getValue(0) != 0) {
+			PWM::getInstance().setValue(0, 0);
+		}
+		_trackIsNearby = deviceNearby;
 	}
-
-	// Change PWM only on change of nearby state
-	if (deviceNearby && !_trackIsNearby) {
-		PWM::getInstance().setValue(0, (uint8_t)-1);
-	} else if (!deviceNearby && _trackIsNearby) {
-		PWM::getInstance().setValue(0, 0);
-	}
-	_trackIsNearby = deviceNearby;
 
 	scheduleNextTick();
 }
@@ -139,7 +141,7 @@ void IndoorLocalizationService::addSignalStrengthCharacteristic() {
 	_rssiCharac->setDefaultValue(1);
 	_rssiCharac->setNotifies(true);
 #ifdef PWM_ON_RSSI
-	 _averageRssi = -50; // Start with something..
+	 _averageRssi = -90; // Start with something..
 #endif
 }
 
@@ -420,7 +422,7 @@ void IndoorLocalizationService::setRSSILevel(int8_t RSSILevel) {
 #ifdef PWM_ON_RSSI
 		//! avg = 0.4*rssi + (1-0.4)*avg
 		_averageRssi = (RSSILevel*4 + _averageRssi*6) / 10;
-//		LOGd("RSSI: %d avg: %d", RSSILevel, _averageRssi);
+		LOGd("RSSI: %d avg: %d", RSSILevel, _averageRssi);
 
 //		//! Map [-90, -40] to [0, 255]
 //		int16_t pwm = (_averageRssi + 90) * 25 / 5;
