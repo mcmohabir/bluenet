@@ -153,6 +153,12 @@ void PWM::setValue(uint8_t channel, uint32_t value) {
 		return;
 	}
 	LOGd("set pwm channel %i to %i", channel, value);
+	if (value) {
+		value = 255;
+	}
+	else {
+		value = 0;
+	}
 	_nextValue[channel] = value;
 
 	PWM_TIMER->EVENTS_COMPARE[3] = 0;
