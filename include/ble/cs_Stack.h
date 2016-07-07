@@ -395,6 +395,7 @@ public:
 	virtual uint16_t getConnectionHandle() {  //! TODO are multiple connections supported?
 		return _conn_handle;
 	}
+	void disconnect();
 
 	/** Not time-critical functionality can be done in the tick
 	 *

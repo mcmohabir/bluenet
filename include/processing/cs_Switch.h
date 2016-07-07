@@ -36,10 +36,17 @@ public:
 
 	void relayOff();
 
+	void relaySwitch();
+
+	static void staticRelaySwitch(Switch *ptr) {
+		ptr->relaySwitch();
+	}
+
 private:
 	Switch();
 
 	uint8_t _switchValue;
+	app_timer_id_t _relayDelayTimer;
 
 };
 

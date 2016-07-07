@@ -431,11 +431,6 @@ ERR_CODE CommandHandler::handleCommand(CommandHandlerTypes type, buffer_ptr_t bu
 #if DEVICE_TYPE==DEVICE_CROWNSTONE
 	// Crownstone specific commands are only available if device type is set to Crownstone.
 	// E.g. GuideStone does not support power measure or switching commands
-	case CMD_SWITCH: {
-		LOGi(STR_HANDLE_COMMAND, "switch");
-		// for now, same as pwm, but switch command should decide itself if relay or
-		// pwm is used
-	}
 	case CMD_PWM: {
 		LOGi(STR_HANDLE_COMMAND, "PWM");
 
@@ -454,6 +449,11 @@ ERR_CODE CommandHandler::handleCommand(CommandHandlerTypes type, buffer_ptr_t bu
 		}
 		break;
 	}
+	case CMD_SWITCH: {
+		LOGi(STR_HANDLE_COMMAND, "switch");
+		// for now, same as pwm, but switch command should decide itself if relay or
+		// pwm is used
+	}
 	case CMD_RELAY: {
 		LOGi(STR_HANDLE_COMMAND, "relay");
 
@@ -465,9 +465,22 @@ ERR_CODE CommandHandler::handleCommand(CommandHandlerTypes type, buffer_ptr_t bu
 		switch_message_payload_t* payload = (switch_message_payload_t*) buffer;
 		uint8_t value = payload->switchState;
 
+		uint8_t curVal;
+		State::getInstance().get(STATE_SWITCH_STATE, curVal);
 		if (value == 0) {
+			State::getInstance().set(STATE_SWITCH_STATE, (uint8_t)(curVal & 2));
 			Switch::getInstance().relayOff();
-		} else {
+		}
+		else if (value == 2) {
+			State::getInstance().set(STATE_SWITCH_STATE, (uint8_t)0);
+			Switch::getInstance().relayOff();
+		}
+		else if (value == 3) {
+			State::getInstance().set(STATE_SWITCH_STATE, (uint8_t)3);
+			Switch::getInstance().relayOn();
+		}
+		else {
+			State::getInstance().set(STATE_SWITCH_STATE, (uint8_t)(curVal | 1));
 			Switch::getInstance().relayOn();
 		}
 

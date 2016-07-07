@@ -627,6 +627,10 @@ bool Nrf51822BluetoothStack::isScanning() {
 	return false;
 }
 
+void Nrf51822BluetoothStack::disconnect() {
+	BLE_CALL(sd_ble_gap_disconnect, (_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION));
+}
+
 //Nrf51822BluetoothStack& Nrf51822BluetoothStack::onRadioNotificationInterrupt(
 //		uint32_t distanceUs, callback_radio_t callback) {
 //	_callback_radio = callback;
