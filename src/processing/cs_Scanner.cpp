@@ -25,6 +25,9 @@ Scanner::Scanner() :
 	_opCode(SCAN_START),
 	_scanning(false),
 	_running(false),
+	_wasScanning(false),
+	_paused(false),
+	_waiting(false),
 	_scanDuration(SCAN_DURATION),
 	_scanSendDelay(SCAN_SEND_DELAY),
 	_scanBreakDuration(SCAN_BREAK_DURATION),
@@ -119,6 +122,35 @@ void Scanner::staticTick(Scanner* ptr) {
 	ptr->executeScan();
 }
 
+void Scanner::pause() {
+	if (!_paused) {
+		LOGi("pause %s", "scanner");
+		_paused = true;
+		if (_scanning) {
+			_wasScanning = true;
+			manualStopScan();
+		}
+	} else {
+		LOGi(FMT_ALREADY, "paused");
+	}
+}
+
+void Scanner::resume() {
+	if (_paused) {
+		LOGi("resume %s", "scanner");
+		_paused = false;
+		if (_waiting) {
+			executeScan();
+			_waiting = false;
+		} else if (_wasScanning) {
+			manualStartScan();
+			_wasScanning = false;
+		}
+	} else {
+		LOGi(FMT_ALREADY, "resumed");
+	}
+}
+
 void Scanner::start() {
 	if (!_running) {
 		_running = true;
@@ -165,6 +197,11 @@ void Scanner::stop() {
 void Scanner::executeScan() {
 
 	if (!_running) return;
+
+	if (_paused) {
+		_waiting = true;
+		return;
+	}
 
 #ifdef PRINT_SCANNER_VERBOSE
 	LOGd("Execute Scan");

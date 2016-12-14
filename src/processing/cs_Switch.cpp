@@ -23,6 +23,8 @@
 // [18.07.16] added for first version of plugins to disable the use of the igbt
 //#define PWM_DISABLE
 
+#define MODIFICATION_110V
+
 Switch::Switch():
 #if (NORDIC_SDK_VERSION >= 11)
 	_relayTimerId(NULL),
@@ -153,19 +155,21 @@ bool Switch::getRelayState() {
 
 void Switch::relayOn() {
 	LOGd("relayOn %u", _nextRelayVal);
-//	if (Nrf51822BluetoothStack::getInstance().isScanning()) {
-//		if (_nextRelayVal != SWITCH_NEXT_RELAY_VAL_NONE) {
-//			_nextRelayVal = SWITCH_NEXT_RELAY_VAL_ON;
-//			return;
-//		}
-//		//! Try again later
-//		LOGd("Currently scanning, try again later");
-//		_nextRelayVal = SWITCH_NEXT_RELAY_VAL_ON;
+#ifdef MODIFICATION_110V
+	if (Nrf51822BluetoothStack::getInstance().isScanning()) {
+		if (_nextRelayVal != SWITCH_NEXT_RELAY_VAL_NONE) {
+			_nextRelayVal = SWITCH_NEXT_RELAY_VAL_ON;
+			return;
+		}
+		//! Try again later
+		LOGd("Currently scanning, try again later");
+		_nextRelayVal = SWITCH_NEXT_RELAY_VAL_ON;
 //		Timer::getInstance().start(_relayTimerId, MS_TO_TICKS(RELAY_DELAY), this);
-//		Scanner::getInstance().manualStopScan(); // TODO: stop scanning via stack, let stack send out an event?
-//		return;
-//	}
+		Scanner::getInstance().pause(); // TODO: stop scanning via stack, let stack send out an event?
+		return;
+	}
 	_nextRelayVal = SWITCH_NEXT_RELAY_VAL_NONE;
+#endif
 
 	uint16_t relayHighDuration;
 	Settings::getInstance().get(CONFIG_RELAY_HIGH_DURATION, &relayHighDuration);
@@ -190,19 +194,21 @@ void Switch::relayOn() {
 
 void Switch::relayOff() {
 	LOGd("relayOff %u", _nextRelayVal);
-//	if (Nrf51822BluetoothStack::getInstance().isScanning()) {
-//		if (_nextRelayVal != SWITCH_NEXT_RELAY_VAL_NONE) {
-//			_nextRelayVal = SWITCH_NEXT_RELAY_VAL_OFF;
-//			return;
-//		}
-//		//! Try again later
-//		LOGd("Currently scanning, try again later");
-//		_nextRelayVal = SWITCH_NEXT_RELAY_VAL_OFF;
+#ifdef MODIFICATION_110V
+	if (Nrf51822BluetoothStack::getInstance().isScanning()) {
+		if (_nextRelayVal != SWITCH_NEXT_RELAY_VAL_NONE) {
+			_nextRelayVal = SWITCH_NEXT_RELAY_VAL_OFF;
+			return;
+		}
+		//! Try again later
+		LOGd("Currently scanning, try again later");
+		_nextRelayVal = SWITCH_NEXT_RELAY_VAL_OFF;
 //		Timer::getInstance().start(_relayTimerId, MS_TO_TICKS(RELAY_DELAY), this);
-////		Scanner::getInstance().manualStopScan(); // TODO: stop scanning via stack, let stack send out an event?
-//		return;
-//	}
+		Scanner::getInstance().pause(); // TODO: stop scanning via stack, let stack send out an event?
+		return;
+	}
 	_nextRelayVal = SWITCH_NEXT_RELAY_VAL_NONE;
+#endif
 
 	uint16_t relayHighDuration;
 	Settings::getInstance().get(CONFIG_RELAY_HIGH_DURATION, &relayHighDuration);
@@ -228,7 +234,10 @@ void Switch::relayOff() {
 void Switch::timedSetRelay() {
 	switch (_nextRelayVal) {
 	case SWITCH_NEXT_RELAY_VAL_NONE:
-		break;
+#ifdef MODIFICATION_110V
+	Scanner::getInstance().resume();
+#endif
+		return;
 	case SWITCH_NEXT_RELAY_VAL_ON:
 		relayOn();
 		break;
@@ -236,6 +245,12 @@ void Switch::timedSetRelay() {
 		relayOff();
 		break;
 	}
+#ifdef MODIFICATION_110V
+	if (_nextRelayVal == SWITCH_NEXT_RELAY_VAL_NONE) {
+		Timer::getInstance().start(_relayTimerId, MS_TO_TICKS(POST_RELAY_DELAY), this);
+	}
+#endif
+
 }
 
 void Switch::turnOn() {
@@ -287,6 +302,14 @@ void Switch::handleEvent(uint16_t evt, void* p_data, uint16_t length) {
 	case EVT_POWER_OFF:
 	case EVT_TRACKED_DEVICE_NOT_NEARBY: {
 		turnOff();
+		break;
+	}
+	case EVT_SCAN_STOPPED: {
+#ifdef MODIFICATION_110V
+		if (_nextRelayVal != SWITCH_NEXT_RELAY_VAL_NONE) {
+			Timer::getInstance().start(_relayTimerId, MS_TO_TICKS(PRE_RELAY_DELAY), this);
+		}
+#endif
 		break;
 	}
 	}

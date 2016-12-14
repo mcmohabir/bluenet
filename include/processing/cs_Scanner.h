@@ -51,6 +51,9 @@ public:
 	//! stop scan immediately (no results will be sent)
 	void stop();
 
+	void pause();
+	void resume();
+
 //	uint32_t getInterval() { return (uint32_t)_scanDuration + _scanSendDelay + _scanBreakDuration; }
 
 	void handleEvent(uint16_t evt, void* p_data, uint16_t length);
@@ -67,6 +70,9 @@ private:
 
 	bool _scanning;
 	bool _running;
+	bool _wasScanning;
+	bool _paused;
+	bool _waiting;
 	//! scan for ... ms
 	uint16_t _scanDuration;
 	//! wait ... ms before sending the scan result
