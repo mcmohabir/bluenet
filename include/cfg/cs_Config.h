@@ -50,7 +50,8 @@
 //#define SCAN_WINDOW                            0x0050
 /** Determines scan window in units of 0.625 millisecond. */
 //#define SCAN_WINDOW                              0x009E
-#define SCAN_WINDOW                              0x0028
+#define SCAN_WINDOW                              0x0050
+//#define SCAN_WINDOW                              0x0028
 
 //! bonding / security
 #define SEC_PARAM_TIMEOUT                        30                                          /** < Timeout for Pairing Request or Security Request (in seconds). */
