@@ -12,6 +12,7 @@
 #include "processing/cs_Switch.h"
 #include "storage/cs_State.h"
 #include "drivers/cs_RTC.h"
+#include "processing/cs_Scanner.h"
 
 #define TOGGLES 4
 #define DEBOUNCE_TIMEOUT 5000 // 5 seconds
@@ -33,6 +34,9 @@ void toggle_power(void * p_context) {
 		count++;
 		Switch::getInstance().toggle();
 		Timer::getInstance().start(_appTimerId, MS_TO_TICKS(500), &count);
+	} else {
+		Scanner::getInstance().resume();
+		count = 0;
 	}
 }
 
@@ -294,6 +298,7 @@ bool EnOceanHandler::learnEnOcean(uint8_t * adrs_ptr, data_t* p_data) {
 		memset(enOcean, 0, sizeof(learned_enocean_t));
 		save();
 
+		Scanner::getInstance().pause();
 		uint8_t count = TOGGLES;
 		toggle_power(&count);
 
@@ -318,6 +323,7 @@ bool EnOceanHandler::learnEnOcean(uint8_t * adrs_ptr, data_t* p_data) {
 		BLEutil::printArray(telegram->securityKey, 16);
 #endif
 
+		Scanner::getInstance().pause();
 		uint8_t count = 0;
 		toggle_power(&count);
 
