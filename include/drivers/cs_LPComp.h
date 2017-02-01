@@ -8,41 +8,32 @@
 
 #include <cstdint>
 
-//#include <stdint.h>
-//
-//#include <common/cs_Types.h>
-//#include "cs_PWM.h"
+
+extern "C" {
+#include <nrf_drv_lpcomp.h>
+}
 
 /** Compare voltage level (hardware peripheral)
  */
 class LPComp {
-	public:
-		//! use static variant of singleton, no dynamic memory allocation
-		static LPComp& getInstance() {
-			static LPComp instance;
-			return instance;
-		}
+public:
+	//! Use static variant of singleton, no dynamic memory allocation
+	static LPComp& getInstance() {
+		static LPComp instance;
+		return instance;
+	}
 
-		enum Event_t {
-			LPC_CROSS=0,
-			LPC_UP,
-			LPC_DOWN,
-			LPC_NONE
-		};
+	void init();
+	void start();
+	void stop();
 
-		uint32_t config(uint8_t pin, uint8_t level, Event_t event);
-		void start();
-		void stop();
+	//! function to be called from interrupt, do not do much there!
+	void handleEvent(nrf_lpcomp_event_t event);
 
-		//! function to be called from interrupt, do not do much there!
-		void interrupt();
-
-	protected:
-
-	private:
-		LPComp();
-		LPComp(LPComp const&); //! singleton, deny implementation
-		void operator=(LPComp const &); //! singleton, deny implementation
-		~LPComp();
+private:
+	LPComp();
+	LPComp(LPComp const&); //! singleton, deny implementation
+	void operator=(LPComp const &); //! singleton, deny implementation
+	~LPComp();
 
 };

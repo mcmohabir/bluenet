@@ -55,6 +55,7 @@ void GPIOTE_IRQHandler(void)	__attribute__ ((weak, alias("unused_isr")));
  * AD converter should be implemented.
  */
 void ADC_IRQHandler(void);
+//void ADC_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 
 void TIMER0_IRQHandler(void)	__attribute__ ((weak, alias("unused_isr")));
 
@@ -77,7 +78,10 @@ void RTC1_IRQHandler(void);
 void QDEC_IRQHandler(void)	__attribute__ ((weak, alias("unused_isr")));
 
 //! The LP comparator
-void WUCOMP_COMP_IRQHandler(void);
+//void WUCOMP_COMP_IRQHandler(void);
+//void WUCOMP_COMP_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
+void LPCOMP_IRQHandler(void);
+//void COMP_LPCOMP_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 
 void SWI0_IRQHandler(void)	__attribute__ ((weak, alias("unused_isr")));
 void SWI1_IRQHandler(void)	__attribute__ ((weak, alias("unused_isr")));
@@ -137,7 +141,7 @@ void (* const gVectors[])(void) =
 	WDT_IRQHandler,
 	RTC1_IRQHandler,
 	QDEC_IRQHandler,
-	WUCOMP_COMP_IRQHandler,
+	LPCOMP_IRQHandler,
 	SWI0_IRQHandler,
 	SWI1_IRQHandler,
 	SWI2_IRQHandler,

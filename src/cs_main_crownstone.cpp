@@ -36,12 +36,14 @@
 #include "drivers/cs_PWM.h"
 #include "util/cs_Utils.h"
 #include "drivers/cs_Timer.h"
-#include <processing/cs_EncryptionHandler.h>
+#include "processing/cs_EncryptionHandler.h"
 #include "structs/buffer/cs_MasterBuffer.h"
 #include "structs/buffer/cs_EncryptionBuffer.h"
 
-#include <drivers/cs_RNG.h>
-#include <drivers/cs_Temperature.h>
+#include "drivers/cs_RNG.h"
+#include "drivers/cs_Temperature.h"
+#include "drivers/cs_COMP.h"
+#include "drivers/cs_LPComp.h"
 
 /**********************************************************************************************************************
  * Custom includes
@@ -60,7 +62,7 @@
 
 Crownstone::Crownstone() :
 #if IS_CROWNSTONE(DEVICE_TYPE)
-	_switch(NULL), _temperatureGuard(NULL), _powerSampler(NULL), _watchdog(NULL), _enOceanHandler(NULL),
+	_switch(NULL), _temperatureGuard(NULL), _powerSampler(NULL), _watchdog(NULL), _enOceanHandler(NULL), _comp(NULL),
 #endif
 	_deviceInformationService(NULL), _crownstoneService(NULL), _setupService(NULL),
 	_generalService(NULL), _localizationService(NULL), _powerService(NULL),
@@ -127,6 +129,9 @@ Crownstone::Crownstone() :
 	_watchdog = &Watchdog::getInstance();
 
 	_enOceanHandler = &EnOceanHandler::getInstance();
+
+//	_comp = &COMP::getInstance();
+	_comp = &LPComp::getInstance();
 #endif
 
 };
@@ -312,6 +317,8 @@ void Crownstone::initDrivers() {
 	_watchdog->init();
 
 	_enOceanHandler->init();
+
+	_comp->init();
 #endif
 
 	// init GPIOs
@@ -643,6 +650,11 @@ void Crownstone::startUp() {
 		nrf_delay_ms(bootDelay);
 	}
 
+	// TODO: is this the right place to start the comp?
+#if IS_CROWNSTONE(DEVICE_TYPE)
+	_comp->start();
+#endif
+
 #if EDDYSTONE==1
 	_eddystone->advertising_start();
 #else
@@ -680,6 +692,8 @@ void Crownstone::startUp() {
 
 		//! start ticking of peripherals
 		_temperatureGuard->startTicking();
+
+//		_comp->start();
 
 		LOGd(FMT_START, "power sampling");
 		_powerSampler->startSampling();

@@ -16,7 +16,10 @@
 #include "events/cs_EventDispatcher.h"
 #include "processing/cs_Switch.h"
 
-#define TEMPERATURE_UPDATE_FREQUENCY 0.2
+#include "drivers/cs_COMP.h"
+
+//#define TEMPERATURE_UPDATE_FREQUENCY 0.2
+#define TEMPERATURE_UPDATE_FREQUENCY 2
 
 //todo: move to code to cpp
 
@@ -57,6 +60,10 @@ public:
 //			//! Make sure pwm can't be set anymore
 //			PWM::getInstance().deinit();
 		}
+
+//		uint32_t comp = COMP::getInstance().sample();
+//		LOGd("comp:%u", comp);
+
 		// TODO: make next time to next tick depend on current temperature
 		scheduleNextTick();
 	}

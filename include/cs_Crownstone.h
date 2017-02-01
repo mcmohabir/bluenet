@@ -39,6 +39,8 @@
 #include <processing/cs_PowerSampling.h>
 #include <processing/cs_Watchdog.h>
 #include <processing/cs_EnOceanHandler.h>
+#include <drivers/cs_COMP.h>
+#include <drivers/cs_LPComp.h>
 #endif
 
 #if BUILD_MESHING == 1
@@ -144,12 +146,15 @@ private:
 	Settings* _settings;
 	State* _stateVars;
 
+
 #if IS_CROWNSTONE(DEVICE_TYPE)
 	Switch* _switch;
 	TemperatureGuard* _temperatureGuard;
 	PowerSampling* _powerSampler;
 	Watchdog* _watchdog;
 	EnOceanHandler* _enOceanHandler;
+//	COMP* _comp;
+	LPComp* _comp;
 #endif
 
 	// services
