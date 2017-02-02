@@ -152,6 +152,8 @@ void (* const gVectors[])(void) =
 	TIMER4_IRQHandler,
 	PWM0_IRQHandler,
 	PDM_IRQHandler,
+	NVMC_IRQHandler,
+	PPI_IRQHandler,
 	MWU_IRQHandler,
 	PWM1_IRQHandler,
 	PWM2_IRQHandler,
