@@ -30,9 +30,11 @@ class LPComp {
 			LPC_NONE
 		};
 
+		void init();
 		uint32_t config(uint8_t pin, uint8_t level, Event_t event);
 		void start();
 		void stop();
+		uint32_t sample();
 
 		//! function to be called from interrupt, do not do much there!
 		void interrupt();

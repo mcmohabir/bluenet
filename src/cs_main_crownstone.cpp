@@ -127,6 +127,8 @@ Crownstone::Crownstone() :
 	_watchdog = &Watchdog::getInstance();
 
 	_enOceanHandler = &EnOceanHandler::getInstance();
+
+	_lpComp = &LPComp::getInstance();
 #endif
 
 };
@@ -305,13 +307,15 @@ void Crownstone::initDrivers() {
 	LOGd(FMT_INIT, "temperature guard");
 	_temperatureGuard->init();
 
-	LOGd(FMT_INIT, "power sampler");
-	_powerSampler->init();
+//	LOGd(FMT_INIT, "power sampler");
+//	_powerSampler->init();
 
-	LOGi(FMT_INIT, "watchdog");
-	_watchdog->init();
+//	LOGi(FMT_INIT, "watchdog");
+//	_watchdog->init();
 
-	_enOceanHandler->init();
+//	_enOceanHandler->init();
+
+//	_lpComp->init();
 #endif
 
 	// init GPIOs
@@ -643,6 +647,12 @@ void Crownstone::startUp() {
 		nrf_delay_ms(bootDelay);
 	}
 
+#if IS_CROWNSTONE(DEVICE_TYPE)
+	_lpComp->init();
+	nrf_delay_ms(10);
+	_lpComp->start();
+#endif
+
 #if EDDYSTONE==1
 	_eddystone->advertising_start();
 #else
@@ -672,17 +682,17 @@ void Crownstone::startUp() {
 #if IS_CROWNSTONE(DEVICE_TYPE)
 		_switch->start();
 
-		// restore the last value. the switch reads the last state from the storage, but does
-		// not automatically update the pwm/relay values. so we read out the last value
-		// and set it again to update the pwm
-		uint8_t pwm = _switch->getPwm();
-		_switch->setPwm(pwm);
-
+//		// restore the last value. the switch reads the last state from the storage, but does
+//		// not automatically update the pwm/relay values. so we read out the last value
+//		// and set it again to update the pwm
+//		uint8_t pwm = _switch->getPwm();
+//		_switch->setPwm(pwm);
+//
 		//! start ticking of peripherals
 		_temperatureGuard->startTicking();
-
-		LOGd(FMT_START, "power sampling");
-		_powerSampler->startSampling();
+//
+//		LOGd(FMT_START, "power sampling");
+//		_powerSampler->startSampling();
 #endif
 
 		_scheduler->start();

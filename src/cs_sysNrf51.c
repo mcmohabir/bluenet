@@ -89,6 +89,8 @@ void TIMER3_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void TIMER4_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void PWM0_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void PDM_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
+void NVMC_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
+void PPI_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void MWU_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void PWM1_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
 void PWM2_IRQHandler(void) __attribute__ ((weak, alias("unused_isr")));
@@ -148,6 +150,8 @@ void (* const gVectors[])(void) =
 	TIMER4_IRQHandler,
 	PWM0_IRQHandler,
 	PDM_IRQHandler,
+	NVMC_IRQHandler,
+	PPI_IRQHandler,
 	MWU_IRQHandler,
 	PWM1_IRQHandler,
 	PWM2_IRQHandler,

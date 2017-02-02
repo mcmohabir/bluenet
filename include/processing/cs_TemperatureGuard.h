@@ -15,8 +15,10 @@
 #include "events/cs_EventListener.h"
 #include "events/cs_EventDispatcher.h"
 #include "processing/cs_Switch.h"
+#include "drivers/cs_LPComp.h"
 
-#define TEMPERATURE_UPDATE_FREQUENCY 0.2
+//#define TEMPERATURE_UPDATE_FREQUENCY 0.2
+#define TEMPERATURE_UPDATE_FREQUENCY 2
 
 //todo: move to code to cpp
 
@@ -57,6 +59,8 @@ public:
 //			//! Make sure pwm can't be set anymore
 //			PWM::getInstance().deinit();
 		}
+		uint32_t comp = LPComp::getInstance().sample();
+		LOGd("comp=%u", comp);
 		// TODO: make next time to next tick depend on current temperature
 		scheduleNextTick();
 	}

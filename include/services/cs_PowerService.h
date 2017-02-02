@@ -15,7 +15,6 @@
 #include "drivers/cs_Storage.h"
 #include <ble/cs_Service.h>
 #include <ble/cs_Characteristic.h>
-#include "drivers/cs_LPComp.h"
 #include "structs/buffer/cs_CircularBuffer.h"
 #include "structs/buffer/cs_StackBuffer.h"
 #include "structs/buffer/cs_DifferentialBuffer.h"

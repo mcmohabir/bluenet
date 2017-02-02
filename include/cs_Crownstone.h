@@ -39,6 +39,7 @@
 #include <processing/cs_PowerSampling.h>
 #include <processing/cs_Watchdog.h>
 #include <processing/cs_EnOceanHandler.h>
+#include <drivers/cs_LPComp.h>
 #endif
 
 #if BUILD_MESHING == 1
@@ -150,6 +151,7 @@ private:
 	PowerSampling* _powerSampler;
 	Watchdog* _watchdog;
 	EnOceanHandler* _enOceanHandler;
+	LPComp* _lpComp;
 #endif
 
 	// services
