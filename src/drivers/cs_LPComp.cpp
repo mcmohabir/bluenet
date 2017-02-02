@@ -26,13 +26,14 @@ LPComp::~LPComp() {
 
 void LPComp::init() {
 	LOGd("init");
-	nrf_drv_lpcomp_config_t config;
-	config.hal.reference = NRF_LPCOMP_REF_SUPPLY_4_8;
-	config.hal.detection = NRF_LPCOMP_DETECT_CROSS;
-	config.input = NRF_LPCOMP_INPUT_3;
-	config.interrupt_priority = APP_IRQ_PRIORITY_LOW;
+//	nrf_drv_lpcomp_config_t config;
+//	config.hal.reference = NRF_LPCOMP_REF_SUPPLY_4_8;
+//	config.hal.detection = NRF_LPCOMP_DETECT_CROSS;
+//	config.input = NRF_LPCOMP_INPUT_2;
+//	config.interrupt_priority = APP_IRQ_PRIORITY_LOW;
 
-	uint32_t err_code = nrf_drv_lpcomp_init(&config, lpcomp_callback);
+//	uint32_t err_code = nrf_drv_lpcomp_init(&config, lpcomp_callback);
+	uint32_t err_code = nrf_drv_lpcomp_init(NULL, lpcomp_callback);
 	APP_ERROR_CHECK(err_code);
 }
 
