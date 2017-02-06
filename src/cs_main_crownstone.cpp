@@ -304,19 +304,19 @@ void Crownstone::initDrivers() {
 
 #if IS_CROWNSTONE(DEVICE_TYPE)
 	// switch / PWM init
-	LOGd(FMT_INIT, "switch / PWM");
-	_switch->init();
+//	LOGd(FMT_INIT, "switch / PWM");
+//	_switch->init();
 
-	LOGd(FMT_INIT, "temperature guard");
-	_temperatureGuard->init();
+//	LOGd(FMT_INIT, "temperature guard");
+//	_temperatureGuard->init();
 
-	LOGd(FMT_INIT, "power sampler");
-	_powerSampler->init();
+//	LOGd(FMT_INIT, "power sampler");
+//	_powerSampler->init();
 
-	LOGi(FMT_INIT, "watchdog");
-	_watchdog->init();
+//	LOGi(FMT_INIT, "watchdog");
+//	_watchdog->init();
 
-	_enOceanHandler->init();
+//	_enOceanHandler->init();
 
 	_comp->init();
 #endif
@@ -687,16 +687,16 @@ void Crownstone::startUp() {
 		// restore the last value. the switch reads the last state from the storage, but does
 		// not automatically update the pwm/relay values. so we read out the last value
 		// and set it again to update the pwm
-		uint8_t pwm = _switch->getPwm();
-		_switch->setPwm(pwm);
+//		uint8_t pwm = _switch->getPwm();
+//		_switch->setPwm(pwm);
 
 		//! start ticking of peripherals
-		_temperatureGuard->startTicking();
+//		_temperatureGuard->startTicking();
 
 //		_comp->start();
 
-		LOGd(FMT_START, "power sampling");
-		_powerSampler->startSampling();
+//		LOGd(FMT_START, "power sampling");
+//		_powerSampler->startSampling();
 #endif
 
 		_scheduler->start();

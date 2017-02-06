@@ -25,7 +25,7 @@ LPComp::~LPComp() {
 }
 
 void LPComp::init() {
-	LOGd("init");
+	LOGd("Init LPCOMP");
 //	nrf_drv_lpcomp_config_t config;
 //	config.hal.reference = NRF_LPCOMP_REF_SUPPLY_4_8;
 //	config.hal.detection = NRF_LPCOMP_DETECT_CROSS;
@@ -33,6 +33,7 @@ void LPComp::init() {
 //	config.interrupt_priority = APP_IRQ_PRIORITY_LOW;
 
 //	uint32_t err_code = nrf_drv_lpcomp_init(&config, lpcomp_callback);
+	LOGd("Callback: %p", lpcomp_callback);
 	uint32_t err_code = nrf_drv_lpcomp_init(NULL, lpcomp_callback);
 	APP_ERROR_CHECK(err_code);
 }
@@ -42,6 +43,7 @@ void LPComp::init() {
  * Stop the LP comparator.
  */
 void LPComp::stop() {
+	LOGd("Stop LPCOMP");
 	nrf_drv_lpcomp_disable();
 }
 
@@ -49,7 +51,7 @@ void LPComp::stop() {
  * Start the LP comparator.
  */
 void LPComp::start() {
-	LOGd("start");
+	LOGd("Start LPCOMP");
 	nrf_drv_lpcomp_enable();
 }
 
@@ -60,6 +62,7 @@ void LPComp::handleEvent(nrf_lpcomp_event_t event) {
 
 
 extern "C" void lpcomp_callback(nrf_lpcomp_event_t event) {
+	APP_ERROR_CHECK(48);
 	LPComp::getInstance().handleEvent(event);
 }
 
