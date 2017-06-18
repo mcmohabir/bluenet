@@ -97,7 +97,7 @@ public:
 	 * @p_data a pointer to the data which was received
 	 * @length number of bytes received
 	 */
-	void process(uint16_t channel, void* p_data, uint16_t length);
+	void process(uint16_t channel, mesh_msg_src_id_t* sourceId, void* p_data, uint16_t length);
 
 	/** Initialize the mesh */
 	void init();
@@ -135,11 +135,12 @@ protected:
 
 	/** Decode a state message received over mesh
 	 *
+	 * @sourceId id of the node that originally sent the message (not the relay node)
 	 * @msg the message payload
 	 * @length length of the message in bytes
 	 * @change whether or not this state message was received over the change handle
 	 */
-	ERR_CODE handleStateMessage(state_message_t* msg, uint16_t length, bool change);
+	ERR_CODE handleStateMessage(mesh_msg_src_id_t* sourceId, state_message_t* msg, uint16_t length, bool change);
 
 	/** Decode a command reply message received over mesh
 	 *

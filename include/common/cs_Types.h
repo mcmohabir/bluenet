@@ -14,3 +14,9 @@ typedef uint16_t buffer_size_t;
 typedef uint16_t ERR_CODE;
 
 typedef uint8_t boolean_t;
+
+#define CS_BLE_GAP_ADDR_LEN 6
+
+typedef struct __attribute__((__packed__)) {
+	uint8_t addr[CS_BLE_GAP_ADDR_LEN]; /**< 48-bit address, LSB format. */
+} cs_ble_gap_addr_t;

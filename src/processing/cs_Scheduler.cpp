@@ -24,6 +24,7 @@ Scheduler::Scheduler() :
 {
 	_appTimerData = { {0} };
 	_appTimerId = &_appTimerData;
+	_timeSync = new TimeSync();
 
 #if SCHEDULER_ENABLED==1
 	_scheduleList = new ScheduleList();
@@ -49,7 +50,10 @@ Scheduler::Scheduler() :
  * returns 0 when no time was set yet
  */
 void Scheduler::setTime(uint32_t time) {
-	LOGi("Set time to %i", time);
+	LOGi("Set time to %u", time);
+	int64_t adjustment = (int64_t)time - _posixTimeStamp;
+	_timeSync->offsetTime(adjustment);
+
 	_posixTimeStamp = time;
 	_rtcTimeStamp = RTC::getCount();
 #if SCHEDULER_ENABLED==1
@@ -163,6 +167,27 @@ void Scheduler::publishScheduleEntries() {
 #endif
 }
 
+void Scheduler::syncTime() {
+//	if (_posixTimeStamp != 0) {
+	int64_t adjustment = _timeSync->syncTime();
+
+	for (uint8_t i=0; i<_timeSync->_nodeListSize; ++i) {
+		uint8_t* a = _timeSync->_nodeList[i].id.addr;
+		LOGd("node [%02X:%02X:%02X:%02X:%02X:%02X] val=%lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+	}
+
+
+	if (adjustment != 0) {
+		LOGi("Adjust time %lli seconds", adjustment);
+		setTime(_posixTimeStamp + adjustment);
+		for (uint8_t i=0; i<_timeSync->_nodeListSize; ++i) {
+			uint8_t* a = _timeSync->_nodeList[i].id.addr;
+			LOGd("node [%02X:%02X:%02X:%02X:%02X:%02X] val=%lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+		}
+	}
+//	}
+}
+
 void Scheduler::handleEvent(uint16_t evt, void* p_data, uint16_t length) {
 	switch (evt) {
 	case STATE_TIME: {
@@ -175,8 +200,27 @@ void Scheduler::handleEvent(uint16_t evt, void* p_data, uint16_t length) {
 	}
 	case EVT_MESH_TIME: {
 		//! Only set the time if there is currently no time set, as these timestamps may be old
-		if (_posixTimeStamp == 0 && length == sizeof(uint32_t)) {
-			setTime(*((uint32_t*)p_data));
+//		if (_posixTimeStamp == 0 && length == sizeof(uint32_t)) {
+//			setTime(*((uint32_t*)p_data));
+//		}
+		if (length == sizeof(evt_mesh_time_t)) {
+			evt_mesh_time_t* meshTime = (evt_mesh_time_t*)p_data;
+
+			if (_posixTimeStamp == 0) {
+				//! Copy the time if there is currently no time set.
+				setTime(meshTime->timestamp);
+			}
+
+			node_id_t sourceId;
+			memcpy(sourceId.addr, meshTime->sourceId.addr, sizeof(meshTime->sourceId));
+			int64_t timeDiff = (int64_t)(meshTime->timestamp) - _posixTimeStamp;
+
+			uint8_t* a = sourceId.addr;
+			LOGd("updateNodeTime [%02X:%02X:%02X:%02X:%02X:%02X]" ,a[5], a[4], a[3], a[2], a[1], a[0]);
+			LOGd("time=%u diff=%lli" ,meshTime->timestamp, timeDiff);
+			LOGd("ownTime=%u", _posixTimeStamp);
+			_timeSync->updateNodeTime(&sourceId, timeDiff);
+			syncTime();
 		}
 		break;
 	}

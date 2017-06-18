@@ -41,7 +41,7 @@ void MeshControl::init() {
 	LOGd("Multi switch msg: size=%d items=%d", sizeof(multi_switch_message_t), MAX_MULTI_SWITCH_ITEMS);
 }
 
-void MeshControl::process(uint16_t channel, void* p_meshMessage, uint16_t messageLength) {
+void MeshControl::process(uint16_t channel, mesh_msg_src_id_t* sourceId, void* p_meshMessage, uint16_t messageLength) {
 
 	mesh_message_t* meshMessage = (mesh_message_t*)p_meshMessage;
 	//! p_data is the payload data, length is the payload length.
@@ -66,11 +66,11 @@ void MeshControl::process(uint16_t channel, void* p_meshMessage, uint16_t messag
 		break;
 	}
 	case STATE_BROADCAST_CHANNEL: {
-		handleStateMessage((state_message_t*)p_data, length, false);
+		handleStateMessage(sourceId, (state_message_t*)p_data, length, false);
 		break;
 	}
 	case STATE_CHANGE_CHANNEL: {
-		handleStateMessage((state_message_t*)p_data, length, true);
+		handleStateMessage(sourceId, (state_message_t*)p_data, length, true);
 		break;
 	}
 	case COMMAND_REPLY_CHANNEL: {
@@ -216,7 +216,7 @@ ERR_CODE MeshControl::handleMultiSwitch(multi_switch_message_t* msg, uint16_t le
 
 }
 
-ERR_CODE MeshControl::handleStateMessage(state_message_t* msg, uint16_t length, bool change) {
+ERR_CODE MeshControl::handleStateMessage(mesh_msg_src_id_t* sourceId, state_message_t* msg, uint16_t length, bool change) {
 #ifdef PRINT_DEBUG
 	LOGd("handleStateMessage %s", change ? "change" : "broadcast");
 #endif
@@ -234,7 +234,15 @@ ERR_CODE MeshControl::handleStateMessage(state_message_t* msg, uint16_t length, 
 
 	if (msg->timestamp != 0) {
 		//! Dispatch an event with the received timestamp
-		EventDispatcher::getInstance().dispatch(EVT_MESH_TIME, &(msg->timestamp), sizeof(msg->timestamp));
+
+//		EventDispatcher::getInstance().dispatch(EVT_MESH_TIME, &(msg->timestamp), sizeof(msg->timestamp));
+
+		evt_mesh_time_t meshTime;
+		static_assert(sizeof(meshTime.sourceId) == sizeof(mesh_msg_src_id_t), "incompatible types");
+		memcpy(&(meshTime.sourceId), sourceId, sizeof(mesh_msg_src_id_t));
+		meshTime.timestamp = msg->timestamp;
+		EventDispatcher::getInstance().dispatch(EVT_MESH_TIME, &meshTime, sizeof(evt_mesh_time_t));
+
 	}
 
 #ifdef PRINT_DEBUG

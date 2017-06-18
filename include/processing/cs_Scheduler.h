@@ -10,6 +10,7 @@
 #include <drivers/cs_Timer.h>
 #include <structs/cs_ScheduleEntries.h>
 #include <events/cs_EventListener.h>
+#include <processing/cs_TimeSync.h>
 
 //todo: just remove it totally if it's not necessary to disable it
 #define SCHEDULER_ENABLED 1
@@ -71,6 +72,8 @@ protected:
 	 */
 	void handleEvent(uint16_t evt, void* p_data, uint16_t length);
 
+	void syncTime();
+
 private:
 	Scheduler();
 
@@ -85,5 +88,6 @@ private:
 	uint32_t _posixTimeStamp;
 	ScheduleList* _scheduleList;
 
+	TimeSync* _timeSync;
 };
 

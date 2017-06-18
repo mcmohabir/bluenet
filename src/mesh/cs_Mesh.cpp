@@ -70,6 +70,14 @@ void Mesh::init() {
 
 	LOGi(FMT_INIT, "Mesh");
 
+	//! Get the address of this crownstone and store it
+	uint32_t err_code;
+	ble_gap_addr_t address;
+	err_code = sd_ble_gap_address_get(&address);
+	APP_ERROR_CHECK(err_code);
+	static_assert(CS_BLE_GAP_ADDR_LEN == BLE_GAP_ADDR_LEN, "incompatible address lengths");
+	memcpy(&(_ownAddress.addr), &(address.addr), CS_BLE_GAP_ADDR_LEN);
+
 	// setup the timer
 	Timer::getInstance().createSingleShot(_appTimerId, (app_timer_timeout_handler_t)Mesh::staticTick);
 
@@ -377,7 +385,8 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 			send(handle, replyMessageNew, sizeof(reply_message_t));
 
 			//! and process the new message
-			_meshControl.process(handle, &messageNew, sizeof(mesh_message_t));
+
+			_meshControl.process(handle, &_ownAddress, &messageNew, sizeof(mesh_message_t));
 		} else if (delta < 0) {
 
 			LOGi("old is newer command reply");
@@ -389,7 +398,7 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 			send(handle, replyMessageOld, sizeof(reply_message_t));
 
 			//! and process the old message
-			_meshControl.process(handle, &messageOld, sizeof(mesh_message_t));
+			_meshControl.process(handle, &_ownAddress, &messageOld, sizeof(mesh_message_t));
 		} else {
 
 			//! Replies should not be of a different type
@@ -437,7 +446,7 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 				send(handle, replyMessageOld, sizeof(reply_message_t));
 
 				//! and process
-				_meshControl.process(handle, &messageOld, sizeof(mesh_message_t));
+				_meshControl.process(handle, &_ownAddress, &messageOld, sizeof(mesh_message_t));
 
 			}
 			//! TODO: handle conflicts for state and config replies?
@@ -507,7 +516,8 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 		send(handle, stateMessageOld, sizeof(state_message_t));
 
 		//! and process
-		_meshControl.process(handle, &messageOld, sizeof(messageOld));
+
+		_meshControl.process(handle, &_ownAddress, &messageOld, sizeof(messageOld));
 
 		break;
 	}
@@ -607,7 +617,11 @@ void Mesh::handleMeshMessage(rbc_mesh_event_t* evt)
 					BLEutil::printArray(&message, sizeof(mesh_message_t));
 #endif
 
-					_meshControl.process(handle, &message, sizeof(mesh_message_t));
+					static_assert(sizeof(mesh_msg_src_id_t) == BLE_GAP_ADDR_LEN, "incompatible types");
+					mesh_msg_src_id_t sourceId;
+					memcpy(&sourceId, &(evt->params.rx.ble_adv_addr.addr), BLE_GAP_ADDR_LEN);
+
+					_meshControl.process(handle, &sourceId, &message, sizeof(mesh_message_t));
 
 				}
 				else {

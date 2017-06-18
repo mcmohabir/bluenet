@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "common/cs_Types.h"
 
 #if (defined HOST_TARGET)
 // See rbc_mesh.h and src/radio_control.h, here it's just to set something more or less random
@@ -18,6 +19,9 @@
 #endif
 
 typedef uint16_t id_type_t;
+
+//! Type to identify the source of a mesh message (original sender, not of relay node)
+typedef cs_ble_gap_addr_t mesh_msg_src_id_t;
 
 //! Header size is size of the message counter + size of the random number.
 #define ENCRYPTED_HEADER_SIZE (sizeof(uint32_t) + sizeof(uint32_t))

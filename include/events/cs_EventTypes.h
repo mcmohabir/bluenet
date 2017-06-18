@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include "common/cs_Types.h"
+
 /**
  * Event types.
  */
@@ -62,3 +64,7 @@ enum GeneralEventType {
 	EVT_ALL = 0xFFFF
 };
 
+struct evt_mesh_time_t {
+	cs_ble_gap_addr_t sourceId;
+	uint32_t timestamp;
+};

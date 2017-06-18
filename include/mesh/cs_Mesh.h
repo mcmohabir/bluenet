@@ -58,6 +58,10 @@ private:
 
 	bool                     _encryptionEnabled;
 
+	//! Address of this crownstone
+	mesh_msg_src_id_t        _ownAddress;
+
+
 	//! constructor is hidden from the user
 	Mesh();
 
