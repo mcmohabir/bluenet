@@ -34,6 +34,7 @@ extern "C" {
 #include <processing/cs_EncryptionHandler.h>
 
 //#define PRINT_MESH_VERBOSE
+#define PRINT_MESH_CONFLICTS
 
 //! Init message counters at 0. See: http://stackoverflow.com/questions/23987515/zero-initializing-an-array-data-member-in-a-constructor
 Mesh::Mesh() :
@@ -330,7 +331,7 @@ bool Mesh::getLastMessage(mesh_handle_t handle, void* p_data, uint16_t& length) 
 void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old, uint16_t length_old,
 		encrypted_mesh_message_t* p_new, uint16_t length_new)
 {
-
+	LOGw("Conflict on handle %u", handle);
 	mesh_message_t messageOld, messageNew;
 
 	bool validatedOld = decodeMessage(p_old, length_old, &messageOld, sizeof(mesh_message_t));
@@ -365,11 +366,75 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 			return;
 		}
 
-#ifdef PRINT_MESH_VERBOSE
-		LOGi("replyMessageOld:");
-		BLEutil::printArray(replyMessageOld, sizeof(reply_message_t));
-		LOGi("replyMessageNew:");
-		BLEutil::printArray(replyMessageNew, sizeof(reply_message_t));
+#ifdef PRINT_MESH_CONFLICTS
+//		LOGi("replyMessageOld:");
+//		BLEutil::printArray(replyMessageOld, sizeof(reply_message_t));
+//		LOGi("replyMessageNew:");
+//		BLEutil::printArray(replyMessageNew, sizeof(reply_message_t));
+		bool newAndOldDiffer = (memcmp(replyMessageOld, replyMessageNew, sizeof(reply_message_t)) != 0);
+		if (newAndOldDiffer) {
+			//! Check if both messages have the same ids, but in a different order.
+			//! Only if the messages have the same number of ids, this is a possibility.
+			if (replyMessageNew->numOfReplys == replyMessageOld->numOfReplys) {
+				newAndOldDiffer = false;
+				for (uint8_t i=0; i<replyMessageNew->numOfReplys; ++i) {
+					bool found = false;
+					id_type_t id = replyMessageNew->statusList[i].id;
+					for (uint8_t j=0; j<replyMessageOld->numOfReplys; ++j) {
+						if (replyMessageOld->statusList[j].id == id) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						newAndOldDiffer = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!newAndOldDiffer) {
+			LOGi("\033[32m...but both messages are similar");
+		}
+		if (newAndOldDiffer) {
+			if (replyMessageOld->messageType == STATUS_REPLY) {
+				LOGi("\033[32mold message:");
+				__attribute__((unused)) uint8_t* ptr = (uint8_t*)replyMessageOld;
+				for (size_t i = 0; i < sizeof(reply_message_t); ++i) {
+					if (ptr[i] != 0) {
+						_log(SERIAL_DEBUG, "\033[33m %02X", ptr[i]);
+					}
+					else {
+						_log(SERIAL_DEBUG, "\033[32m %02X", ptr[i]);
+					}
+					if ((i+1) % 30 == 0) {
+						_log(SERIAL_DEBUG, "\033[0m");
+						_log(SERIAL_DEBUG, SERIAL_CRLF);
+					}
+				}
+				_log(SERIAL_DEBUG, "\033[0m");
+				_log(SERIAL_DEBUG, SERIAL_CRLF);
+			}
+			if (replyMessageNew->messageType == STATUS_REPLY) {
+				LOGi("\033[32mnew message:");
+				__attribute__((unused)) uint8_t* ptr = (uint8_t*)replyMessageNew;
+				for (size_t i = 0; i < sizeof(reply_message_t); ++i) {
+					if (ptr[i] != 0) {
+						_log(SERIAL_DEBUG, "\033[33m %02X", ptr[i]);
+					}
+					else {
+						_log(SERIAL_DEBUG, "\033[32m %02X", ptr[i]);
+					}
+					if ((i+1) % 30 == 0) {
+						_log(SERIAL_DEBUG, "\033[0m");
+						_log(SERIAL_DEBUG, SERIAL_CRLF);
+					}
+				}
+				_log(SERIAL_DEBUG, "\033[0m");
+				_log(SERIAL_DEBUG, SERIAL_CRLF);
+			}
+		}
 #endif
 
 		//! The message counter is used to identify the to which command this message replies to.
@@ -434,9 +499,29 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 
 				}
 
-#ifdef PRINT_MESH_VERBOSE
-				LOGi("merged:");
-				BLEutil::printArray(replyMessageOld, sizeof(reply_message_t));
+#ifdef PRINT_MESH_CONFLICTS
+//				LOGi("merged:");
+//				BLEutil::printArray(replyMessageOld, sizeof(reply_message_t));
+				if (newAndOldDiffer) {
+					if (replyMessageOld->messageType == STATUS_REPLY) {
+						LOGi("\033[31mmerged:");
+						__attribute__((unused)) uint8_t* ptr = (uint8_t*)replyMessageOld;
+						for (size_t i = 0; i < sizeof(reply_message_t); ++i) {
+							if (ptr[i] != 0) {
+								_log(SERIAL_DEBUG, "\033[33m %02X", ptr[i]);
+							}
+							else {
+								_log(SERIAL_DEBUG, "\033[32m %02X", ptr[i]);
+							}
+							if ((i+1) % 30 == 0) {
+								_log(SERIAL_DEBUG, "\033[0m");
+								_log(SERIAL_DEBUG, SERIAL_CRLF);
+							}
+						}
+						_log(SERIAL_DEBUG, "\033[0m");
+						_log(SERIAL_DEBUG, SERIAL_CRLF);
+					}
+				}
 #endif
 
 				//! update message counter
@@ -467,7 +552,7 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 			return;
 		}
 
-#ifdef PRINT_MESH_VERBOSE
+#ifdef PRINT_MESH_CONFLICTS
 		LOGi("stateMessageOld:");
 		BLEutil::printArray(stateMessageOld, sizeof(state_message_t));
 		LOGi("stateMessageNew:");
@@ -504,7 +589,7 @@ void Mesh::resolveConflict(mesh_handle_t handle, encrypted_mesh_message_t* p_old
 		}
 		stateMessageOld->timestamp = timestamp;
 
-#ifdef PRINT_MESH_VERBOSE
+#ifdef PRINT_MESH_CONFLICTS
 		LOGi("merged:");
 		BLEutil::printArray(stateMessageOld, sizeof(state_message_t));
 #endif

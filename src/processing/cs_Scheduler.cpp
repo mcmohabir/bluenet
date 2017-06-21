@@ -36,6 +36,15 @@ Scheduler::Scheduler() :
 	readScheduleList();
 #endif
 
+	//! Init TimeSync with its own address
+	uint32_t err_code;
+	ble_gap_addr_t address;
+	err_code = sd_ble_gap_address_get(&address);
+	APP_ERROR_CHECK(err_code);
+	node_id_t nodeId;
+	memcpy(nodeId.addr, address.addr, CS_BLE_GAP_ADDR_LEN);
+	_timeSync->init(&nodeId);
+
 	//! Subscribe for events.
 	EventDispatcher::getInstance().addListener(this);
 
@@ -50,7 +59,7 @@ Scheduler::Scheduler() :
  * returns 0 when no time was set yet
  */
 void Scheduler::setTime(uint32_t time) {
-	LOGi("Set time to %u", time);
+	LOGi("\033[33mSet time to %u", time);
 	int64_t adjustment = (int64_t)time - _posixTimeStamp;
 	_timeSync->offsetTime(adjustment);
 
@@ -172,17 +181,30 @@ void Scheduler::syncTime() {
 	int64_t adjustment = _timeSync->syncTime();
 
 	for (uint8_t i=0; i<_timeSync->_nodeListSize; ++i) {
-		uint8_t* a = _timeSync->_nodeList[i].id.addr;
-		LOGd("node [%02X:%02X:%02X:%02X:%02X:%02X] val=%lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+		__attribute__((unused)) uint8_t* a = _timeSync->_nodeList[i].id.addr;
+//		LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+		if (_timeSync->_nodeList[i].isOutlier) {
+			LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli   \033[31mOUTLIER!!" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff);
+		}
+		else {
+			LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff);
+		}
 	}
 
 
 	if (adjustment != 0) {
-		LOGi("Adjust time %lli seconds", adjustment);
+//		LOGi("\033[32mAdjust time %lli seconds", adjustment);
+		LOGw("Adjust time %lli seconds", adjustment);
 		setTime(_posixTimeStamp + adjustment);
 		for (uint8_t i=0; i<_timeSync->_nodeListSize; ++i) {
-			uint8_t* a = _timeSync->_nodeList[i].id.addr;
-			LOGd("node [%02X:%02X:%02X:%02X:%02X:%02X] val=%lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+			__attribute__((unused)) uint8_t* a = _timeSync->_nodeList[i].id.addr;
+//			LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli outlier=%i" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff, _timeSync->_nodeList[i].isOutlier);
+			if (_timeSync->_nodeList[i].isOutlier) {
+				LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli   \033[31mOUTLIER!!" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff);
+			}
+			else {
+				LOGd("\033[32mnode [%02X:%02X:%02X:%02X:%02X:%02X] val=%5lli" ,a[5], a[4], a[3], a[2], a[1], a[0], _timeSync->_nodeList[i].timestampDiff);
+			}
 		}
 	}
 //	}

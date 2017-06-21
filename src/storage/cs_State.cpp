@@ -452,9 +452,9 @@ ERR_CODE State::get(uint8_t type, void* target, uint16_t size) {
 		}
 		case STATE_TIME: {
 			*(uint32_t*)target = _time;
-#ifdef PRINT_DEBUG
+//#ifdef PRINT_DEBUG
 			LOGd(FMT_GET_INT_VAL, "time", *(uint32_t*)target);
-#endif
+//#endif
 			break;
 		}
 		case STATE_TRACKED_DEVICES: {

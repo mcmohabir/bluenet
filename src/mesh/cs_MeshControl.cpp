@@ -17,15 +17,15 @@
 #include <common/cs_Types.h>
 
 // enable for additional debug output
-//#define PRINT_DEBUG
-//#define PRINT_MESHCONTROL_VERBOSE
+#define PRINT_DEBUG
+#define PRINT_MESHCONTROL_VERBOSE
 
-#define PRINT_VERBOSE_KEEPALIVE
+//#define PRINT_VERBOSE_KEEPALIVE
 //#define PRINT_VERBOSE_STATE_BROADCAST
 //#define PRINT_VERBOSE_STATE_CHANGE
 //#define PRINT_VERBOSE_SCAN_RESULT
-//#define PRINT_VERBOSE_COMMAND
-//#define PRINT_VERBOSE_COMMAND_REPLY
+#define PRINT_VERBOSE_COMMAND
+#define PRINT_VERBOSE_COMMAND_REPLY
 #define PRINT_VERBOSE_MULTI_SWITCH
 
 MeshControl::MeshControl() : EventListener(EVT_ALL), _myCrownstoneId(0) {
@@ -273,7 +273,7 @@ ERR_CODE MeshControl::handleStateMessage(mesh_msg_src_id_t* sourceId, state_mess
 
 ERR_CODE MeshControl::handleCommandReplyMessage(reply_message_t* msg, uint16_t length) {
 	LOGi("handleCommandReplyMessage");
-	BLEutil::printArray(msg, length);
+//	BLEutil::printArray(msg, length);
 
 	if (!is_valid_reply_msg(msg, length)) {
 		LOGe("Invalid message:");
@@ -288,9 +288,9 @@ ERR_CODE MeshControl::handleCommandReplyMessage(reply_message_t* msg, uint16_t l
 		LOGi("Received Status Reply for Message: %d", msg->messageCounter);
 
 #if defined(PRINT_DEBUG) and defined(PRINT_VERBOSE_COMMAND_REPLY)
-		for (int i = 0; i < msg->numOfReplys; ++i) {
-			LOGi("  ID %d: %d", msg->statusList[i].id, msg->statusList[i].status);
-		}
+//		for (int i = 0; i < msg->numOfReplys; ++i) {
+//			LOGi("  ID %d: %d", msg->statusList[i].id, msg->statusList[i].status);
+//		}
 #endif
 		break;
 	}
@@ -791,8 +791,8 @@ void MeshControl::sendStatusReplyMessage(uint32_t messageCounter, ERR_CODE statu
 	push_status_reply_item(&message, &replyItem);
 
 #if defined(PRINT_DEBUG) &&  defined(PRINT_VERBOSE_COMMAND_REPLY)
-		LOGi("message data:");
-		BLEutil::printArray(&message, sizeof(reply_message_t));
+//		LOGi("message data:");
+//		BLEutil::printArray(&message, sizeof(reply_message_t));
 #endif
 
 	Mesh::getInstance().send(COMMAND_REPLY_CHANNEL, &message, sizeof(reply_message_t));
