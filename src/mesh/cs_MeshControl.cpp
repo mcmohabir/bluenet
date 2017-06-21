@@ -766,7 +766,6 @@ ERR_CODE MeshControl::send(uint16_t channel, void* p_data, uint16_t length) {
 
 }
 
-// this is where i was
 void MeshControl::sendStatusReplyMessage(uint32_t messageCounter, ERR_CODE status) {
 
 #if defined(PRINT_MESHCONTROL_VERBOSE) && defined(PRINT_VERBOSE_COMMAND_REPLY)

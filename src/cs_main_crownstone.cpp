@@ -242,7 +242,7 @@ void Crownstone::configure() {
 	uint16_t resetCounter;
 	State::getInstance().get(STATE_RESET_COUNTER, resetCounter);
 	++resetCounter;
-	LOGf("Reset counter at: %d", resetCounter);
+	LOGw("Reset counter at: %d", resetCounter);
 	State::getInstance().set(STATE_RESET_COUNTER, resetCounter);
 #endif
 
