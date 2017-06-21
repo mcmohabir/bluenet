@@ -10,18 +10,26 @@
 #include <string.h> // Required for memset, memcpy, memcmp
 
 TimeSync::TimeSync() :
-_nodeListSize(0)
+	_nodeListSize(0),
+	_numNonOutliers(0),
+	_mean(0),
+	_std(0)
 {
-	//! Add ourself as first node, use 0 as id
-	memset(&(_nodeList[0].id), 0, sizeof(node_id_t));
-	_nodeList[0].timestampDiff = 0;
-	_nodeList[0].isOutlier = false;
-	_nodeListSize++;
-	_numNonOutliers++;
+
 }
 
 TimeSync::~TimeSync() {
 
+}
+
+void TimeSync::init(node_id_t* ownNodeId) {
+	//! Add ourself as first node
+	updateNodeTime(ownNodeId, 0);
+//	memset(&(_nodeList[0].id), 0, sizeof(node_id_t));
+//	_nodeList[0].timestampDiff = 0;
+//	_nodeList[0].isOutlier = false;
+//	_nodeListSize++;
+//	_numNonOutliers++;
 }
 
 void TimeSync::updateNodeTime(node_id_t* nodeId, int64_t timeDiff) {
@@ -49,10 +57,6 @@ void TimeSync::updateNodeTime(node_id_t* nodeId, int64_t timeDiff) {
 }
 
 int64_t TimeSync::syncTime() {
-//	for (uint8_t i=0; i<_nodeListSize; ++i) {
-//
-//	}
-
 	//! Fresh start
 	markAllAsNonOutlier();
 	markAllOutliers();
@@ -60,6 +64,11 @@ int64_t TimeSync::syncTime() {
 	if (_numNonOutliers < 3) {
 		return 0;
 	}
+	//! If this node is not an outlier, don't adjust the time
+	if (!_nodeList[0].isOutlier) {
+		return 0;
+	}
+
 	//! For now, just return the mean.
 	//! TODO: it should return a step towards the mean, taking the std into account etc.
 	return _mean;

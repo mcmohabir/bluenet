@@ -215,10 +215,11 @@ void Scheduler::handleEvent(uint16_t evt, void* p_data, uint16_t length) {
 			memcpy(sourceId.addr, meshTime->sourceId.addr, sizeof(meshTime->sourceId));
 			int64_t timeDiff = (int64_t)(meshTime->timestamp) - _posixTimeStamp;
 
-			uint8_t* a = sourceId.addr;
-			LOGd("updateNodeTime [%02X:%02X:%02X:%02X:%02X:%02X]" ,a[5], a[4], a[3], a[2], a[1], a[0]);
-			LOGd("time=%u diff=%lli" ,meshTime->timestamp, timeDiff);
-			LOGd("ownTime=%u", _posixTimeStamp);
+			__attribute__((unused)) uint8_t* a = sourceId.addr;
+//			LOGd("updateNodeTime [%02X:%02X:%02X:%02X:%02X:%02X]" ,a[5], a[4], a[3], a[2], a[1], a[0]);
+//			LOGd("time=%u diff=%lli" ,meshTime->timestamp, timeDiff);
+//			LOGd("ownTime=%u", _posixTimeStamp);
+			LOGd("\033[32mreceived node time [%02X:%02X:%02X:%02X:%02X:%02X] diff=%lli" ,a[5], a[4], a[3], a[2], a[1], a[0], timeDiff);
 			_timeSync->updateNodeTime(&sourceId, timeDiff);
 			syncTime();
 		}

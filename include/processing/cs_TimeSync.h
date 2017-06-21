@@ -25,6 +25,12 @@ public:
 	TimeSync();
 	~TimeSync();
 
+	/** Init the class
+	 *
+	 * @ownNodeId pointer to the node id of this node
+	 */
+	void init(node_id_t* ownNodeId);
+
 	/** Update (or add) the time of a node
 	 *
 	 * @nodeId pointer to the node id
