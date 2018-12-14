@@ -82,6 +82,7 @@ public:
 			_storage->writeItem(_storageHandle, _storageOffset, (uint8_t*)&_buffer, sizeof(_buffer), true);
 		}
 		else {
+			// When multiple write are queued, they all point to "element" as data. So the same value is written multiple times in storage.
 			_storage->writeItem(_storageHandle, offset, (uint8_t*)&element, sizeof(storage_element_t), update);
 		}
 		_value = value;
