@@ -409,31 +409,27 @@ bool EnOceanHandler::triggerEnOcean(uint8_t * adrs_ptr, data_t* p_data) {
 
 bool EnOceanHandler::parseAdvertisement(ble_gap_evt_adv_report_t* p_adv_report) {
 
-	data_t type_data;
-	data_t adv_data;
+	data_t typeData;
 
-	//! Initialize advertisement report for parsing.
-	adv_data.p_data = (uint8_t *)p_adv_report->data;
-	adv_data.data_len = p_adv_report->dlen;
-
-	uint32_t err_code = BLEutil::adv_report_parse(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
-										 &adv_data,
-										 &type_data);
+	uint32_t err_code = BLEutil::findAdvType(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
+			p_adv_report->data,
+			p_adv_report->dlen,
+			&typeData);
 	if (err_code == NRF_SUCCESS)
 	{
-		uint16_t companyIdentifier = type_data.p_data[1] << 8 | type_data.p_data[0];
+		uint16_t companyIdentifier = typeData.data[1] << 8 | typeData.data[0];
 		if (companyIdentifier == ENOCEAN_COMPANY_ID)
 		{
 #ifdef ENOCEAN_DEBUG
 			LOGi("rssi: %d", p_adv_report->rssi);
 #endif
 //			LOGi("type_data.data_len: %d", type_data.data_len);
-			if (type_data.data_len == 22 && p_adv_report->rssi > LEARNING_RSSI_THRESHOLD) {
+			if (typeData.len == 22 && p_adv_report->rssi > LEARNING_RSSI_THRESHOLD) {
 				// learn
-				learnEnOcean(p_adv_report->peer_addr.addr, &type_data);
-			} else if (type_data.data_len == 11) {
+				learnEnOcean(p_adv_report->peer_addr.addr, &typeData);
+			} else if (typeData.len == 11) {
 				// trigger
-				triggerEnOcean(p_adv_report->peer_addr.addr, &type_data);
+				triggerEnOcean(p_adv_report->peer_addr.addr, &typeData);
 			}
 			return true;
 		}

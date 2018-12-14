@@ -194,10 +194,16 @@ void Scanner::executeScan() {
 		_scanResult->print();
 #endif
 
-		//! Wait SCAN_SEND_WAIT ms before sending the results, so that it can listen to the mesh before sending
-		Timer::getInstance().start(_appTimerId, MS_TO_TICKS(_scanSendDelay), this);
+//		//! Wait SCAN_SEND_WAIT ms before sending the results, so that it can listen to the mesh before sending
+//		Timer::getInstance().start(_appTimerId, MS_TO_TICKS(_scanSendDelay), this);
+//
+//		_opCode = SCAN_SEND_RESULT;
 
-		_opCode = SCAN_SEND_RESULT;
+		// Skip the sending the results
+		//! Wait SCAN_BREAK ms, then start scanning again
+		Timer::getInstance().start(_appTimerId, MS_TO_TICKS(_scanBreakDuration), this);
+
+		_opCode = SCAN_START;
 		break;
 	}
 	case SCAN_SEND_RESULT: {
@@ -234,7 +240,6 @@ void Scanner::notifyResults() {
 }
 
 void Scanner::onBleEvent(ble_evt_t * p_ble_evt) {
-
 	switch (p_ble_evt->header.evt_id) {
 	case BLE_GAP_EVT_ADV_REPORT:
 		onAdvertisement(&p_ble_evt->evt.gap_evt.params.adv_report);
@@ -250,8 +255,9 @@ bool Scanner::isFiltered(data_t* p_adv_data) {
 
 	data_t type_data;
 
-	uint32_t err_code = BLEutil::adv_report_parse(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
-										 p_adv_data,
+	uint32_t err_code = BLEutil::findAdvType(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA,
+										 p_adv_data->data,
+										 p_adv_data->len,
 										 &type_data);
 	if (err_code == NRF_SUCCESS) {
 //		_logFirst(SERIAL_INFO, "found manufac data:");
@@ -259,8 +265,8 @@ bool Scanner::isFiltered(data_t* p_adv_data) {
 
 		//! [28.01.16] can't cast to uint16_t because it's possible that p_data is not
 		//! word aligned!! So have to shift it by hand
-		uint16_t companyIdentifier = type_data.p_data[1] << 8 | type_data.p_data[0];
-		if (type_data.data_len >= 3 &&
+		uint16_t companyIdentifier = type_data.data[1] << 8 | type_data.data[0];
+		if (type_data.len >= 3 &&
 			companyIdentifier == CROWNSTONE_COMPANY_ID) {
 //			LOGi("is dobots device!");
 
@@ -268,7 +274,7 @@ bool Scanner::isFiltered(data_t* p_adv_data) {
 //			BLEutil::printArray(type_data.p_data+2, type_data.data_len-2);
 //
 			CrownstoneManufacturer CrownstoneManufacturer;
-			CrownstoneManufacturer.parse(type_data.p_data+2, type_data.data_len-2);
+			CrownstoneManufacturer.parse(type_data.data+2, type_data.len-2);
 
 			switch (CrownstoneManufacturer.getDeviceType()) {
 			case DEVICE_GUIDESTONE: {
@@ -286,12 +292,13 @@ bool Scanner::isFiltered(data_t* p_adv_data) {
 		}
 	}
 
-	err_code = BLEutil::adv_report_parse(BLE_GAP_AD_TYPE_SERVICE_DATA,
-										 p_adv_data,
+	err_code = BLEutil::findAdvType(BLE_GAP_AD_TYPE_SERVICE_DATA,
+										 p_adv_data->data,
+										 p_adv_data->len,
 										 &type_data);
 	if (err_code == NRF_SUCCESS) {
-		if (type_data.data_len == 19) {
-			uint16_t companyIdentifier = type_data.p_data[1] << 8 | type_data.p_data[0];
+		if (type_data.len == 19) {
+			uint16_t companyIdentifier = type_data.data[1] << 8 | type_data.data[0];
 			switch (companyIdentifier) {
 			case GUIDESTONE_SERVICE_DATA_UUID: {
 //				LOGi("found guidestone");
@@ -316,6 +323,10 @@ void Scanner::onAdvertisement(ble_gap_evt_adv_report_t* p_adv_report) {
 	if (isScanning()) {
 
 		EventDispatcher::getInstance().dispatch(EVT_DEVICE_SCANNED, p_adv_report, sizeof(ble_gap_evt_adv_report_t));
+
+		// Skip updating the scanResult
+		return;
+
 		//! we do active scanning, to avoid handling each device twice, only
 		//! check the scan responses (as long as we don't care about the
 		//! advertisement data)
@@ -323,8 +334,8 @@ void Scanner::onAdvertisement(ble_gap_evt_adv_report_t* p_adv_report) {
             data_t adv_data;
 
             //! Initialize advertisement report for parsing.
-            adv_data.p_data = (uint8_t *)p_adv_report->data;
-            adv_data.data_len = p_adv_report->dlen;
+            adv_data.data = (uint8_t *)p_adv_report->data;
+            adv_data.len = p_adv_report->dlen;
 
 			if (!isFiltered(&adv_data)) {
 				_scanResult->update(p_adv_report->peer_addr.addr, p_adv_report->rssi);
