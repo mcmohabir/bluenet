@@ -56,56 +56,58 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		return;
 	}
 
+	CommandAdvertisementHeader header = CommandAdvertisementHeader();
+	// Fill the struct with data from the 4 service UUIDs.
+	// Keep up which sequence numbers have been handled.
 	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
 		uint16_t serviceUuid = ((uint16_t*)services16bit.data)[i];
 		LOGd("uuid=%u", serviceUuid);
-	}
-
-	CommandAdvertisementHeader header;
-	uint8_t* pHeader = (uint8_t*)&header;
-	// Fill the struct with data from the 4 service UUIDs, but make sure they are in the correct order.
-	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
-		errCode = getNthService(i, services16bit, (pHeader + i * sizeof(uint16_t)));
-		if (errCode != ERR_SUCCESS) {
-			return;
+		uint8_t sequence = (serviceUuid >> 14) & 0x0003;
+		switch (sequence) {
+		case 0:
+			header.sequence0 = sequence;
+			header.protocol =    (serviceUuid >> 6)  & 0x00FF;
+			header.accessLevel = (serviceUuid >> 2)  & 0x000F;
+			header.profile =     (serviceUuid >> 0)  & 0x0003;
+			break;
+		case 1:
+			header.sequence1 = sequence;
+			header.type =        (serviceUuid >> 12) & 0x0003;
+			header.payload =     (serviceUuid >> 0)  & 0x0FFF;
+			break;
+		case 2:
+			header.sequence2 = sequence;
+			header.sphereId =    (serviceUuid >> 6)  & 0x00FF;
+			header.locationId =  (serviceUuid >> 0)  & 0x003F;
+			break;
+		case 3:
+			header.sequence3 = sequence;
+			header.time =        (serviceUuid >> 0)  & 0x3FFF;
+			break;
 		}
 	}
-	LOGd("header pointer=%p size=%u", pHeader, sizeof(header));
-	_logSerial(SERIAL_DEBUG, "data=");
-	for (int i=0; i<8; ++i) {
-		uint8_t* ptr = pHeader + i;
-		_logSerial(SERIAL_DEBUG, "%u%u%u%u %u%u%u%u ",
-				((*ptr) & 0x80) >> 7,
-				((*ptr) & 0x40) >> 6,
-				((*ptr) & 0x20) >> 5,
-				((*ptr) & 0x10) >> 4,
-				((*ptr) & 0x08) >> 3,
-				((*ptr) & 0x04) >> 2,
-				((*ptr) & 0x02) >> 1,
-				((*ptr) & 0x01) >> 0
-				);
-	}
-	_logSerial(SERIAL_DEBUG, SERIAL_CRLF);
+
+
+//	uint8_t* pHeader = (uint8_t*)&header;
+//	LOGd("header pointer=%p size=%u", pHeader, sizeof(header));
+//	_logSerial(SERIAL_DEBUG, "data=");
+//	for (int i=0; i<8; ++i) {
+//		uint8_t* ptr = pHeader + i;
+//		_logSerial(SERIAL_DEBUG, "%u%u%u%u %u%u%u%u ",
+//				((*ptr) & 0x80) >> 7,
+//				((*ptr) & 0x40) >> 6,
+//				((*ptr) & 0x20) >> 5,
+//				((*ptr) & 0x10) >> 4,
+//				((*ptr) & 0x08) >> 3,
+//				((*ptr) & 0x04) >> 2,
+//				((*ptr) & 0x02) >> 1,
+//				((*ptr) & 0x01) >> 0
+//				);
+//	}
+//	_logSerial(SERIAL_DEBUG, SERIAL_CRLF);
 	LOGd("  protocol=%u accessLevel=%u profile=%u", header.protocol, header.accessLevel, header.profile);
 	LOGd("  type=%u payload=%u", header.type, header.payload);
 	LOGd("  sphereId=%u locationId=%u time=%u", header.sphereId, header.locationId, header.time);
-}
-
-// Searches for 16 bit service uuid with first 2 bits equal to given index.
-// When found, the service uuid is copied to dest.
-uint32_t CommandAdvertisementHandler::getNthService(uint8_t index, const data_t& services16bit, uint8_t* dest) {
-	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
-		uint16_t serviceUuid = ((uint16_t*)services16bit.data)[i];
-		if ((serviceUuid & 0xC000) >> 14 == index) {
-			LOGd("found %u in %u copy to %p", index, serviceUuid, dest);
-//			memcpy(dest, &serviceUuid, 2); // Doesn't work well, since uint16_t is LSB
-			memcpy(dest + 1, services16bit.data + i*sizeof(uint16_t),     1);
-			memcpy(dest,     services16bit.data + i*sizeof(uint16_t) + 1, 1);
-			// TODO: make a unit test to see if this works in case bit order changes with a new compiler or so.
-			return ERR_SUCCESS;
-		}
-	}
-	return ERR_NOT_FOUND;
 }
 
 void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t length) {
