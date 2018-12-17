@@ -275,7 +275,7 @@ bool EnOceanHandler::learnEnOcean(uint8_t * adrs_ptr, data_t* p_data) {
 		return false;
 	}
 
-	commissioning_telegram_t* telegram = (commissioning_telegram_t*) p_data->p_data;
+	commissioning_telegram_t* telegram = (commissioning_telegram_t*) p_data->data;
 	if (telegram->seqCounter > _lastSequenceCounter) {
 
 		_lastSequenceCounter = telegram->seqCounter;
@@ -340,7 +340,7 @@ bool EnOceanHandler::triggerEnOcean(uint8_t * adrs_ptr, data_t* p_data) {
 
 	bool success = false;
 
-	data_telegram_t* telegram = (data_telegram_t*) p_data->p_data;
+	data_telegram_t* telegram = (data_telegram_t*) p_data->data;
 
 //	LOGi("telegram->seqCounter: %d", telegram->seqCounter);
 

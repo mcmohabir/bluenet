@@ -141,8 +141,8 @@ inline bool clearBit(T& value, uint8_t bit) {
  * @retval ERR_SUCCESS if the data type is found in the report.
  * @retval ERR_NOT_FOUND if the type could not be found.
  */
-static uint32_t findAdvType(uint8_t type, uint8_t* advData, uint8_t advLen, data_t* foundData) {
-	uint32_t index = 0;
+inline static uint32_t findAdvType(uint8_t type, uint8_t* advData, uint8_t advLen, data_t* foundData) {
+	int index = 0;
 	foundData->data = NULL;
 	foundData->len = 0;
 	while (index < advLen-1) {
