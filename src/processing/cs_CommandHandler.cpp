@@ -18,6 +18,7 @@
 #include <protocol/cs_UartProtocol.h>
 #include <storage/cs_Settings.h>
 #include <storage/cs_State.h>
+#include <protocol/cs_CommandTypes.h>
 
 #if BUILD_MESHING == 1
 #include <ble/cs_NordicMesh.h>
@@ -172,6 +173,8 @@ ERR_CODE CommandHandler::handleCommand(const CommandHandlerTypes type, buffer_pt
 		return handleCmdUartMsg(buffer, size, accessLevel);
 	case CMD_UART_ENABLE:
 		return handleCmdUartEnable(buffer, size, accessLevel);
+	case CMD_ADV_MULTISWITCH:
+		return handleCmdAdvMultiSwitch(buffer, size, accessLevel);
 	default:
 		LOGe("Unknown type: %u", type);
 		return ERR_UNKNOWN_TYPE;
@@ -814,6 +817,30 @@ ERR_CODE CommandHandler::handleCmdUartEnable(buffer_ptr_t buffer, const uint16_t
 	return ERR_SUCCESS;
 }
 
+ERR_CODE CommandHandler::handleCmdAdvMultiSwitch(buffer_ptr_t buffer, const uint16_t size, const EncryptionAccessLevel accessLevel) {
+	LOGd(STR_HANDLE_COMMAND, "adv multiswitch");
+
+	if (size != 11) {
+		LOGe(FMT_WRONG_PAYLOAD_LENGTH, size);
+		return ERR_WRONG_PAYLOAD_LENGTH;
+	}
+	uint8_t count = buffer[0];
+	if (count * 2 > size-1) {
+		LOGe(FMT_WRONG_PAYLOAD_LENGTH, size);
+		return ERR_WRONG_PAYLOAD_LENGTH;
+	}
+	uint8_t id;
+	Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &id);
+
+	for (int i=0; i<count; ++i) {
+		if (buffer[1+i*2] == id) {
+			switch_message_payload_t* switchPayload = (switch_message_payload_t*)(&buffer[1+i*2+1]);
+			Switch::getInstance().setSwitch(switchPayload->switchState);
+			return ERR_SUCCESS;
+		}
+	}
+	return ERR_SUCCESS;
+}
 
 
 EncryptionAccessLevel CommandHandler::getRequiredAccessLevel(const CommandHandlerTypes type) {
