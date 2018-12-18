@@ -145,6 +145,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	uint8_t type =  services128bit.data[4];
 	uint16_t length = services128bit.len - 5;
 	uint8_t* commandData = services128bit.data + 5;
+	uint32_t nonce = 0;
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
 	switch (type) {
 	case 1:
@@ -157,7 +158,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	}
 	CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
 
-	if (!EncryptionHandler::getInstance().decrypt(services128bit.data, services128bit.len, decryptedData, 16, accessLevel)) {
+	if (!EncryptionHandler::getInstance().decryptBlockCTR(services128bit.data, services128bit.len, decryptedData, 16, accessLevel, nonce)) {
 		return;
 	}
 	logSerial(SERIAL_DEBUG, "decrypted data: ");

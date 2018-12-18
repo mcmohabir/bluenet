@@ -188,6 +188,33 @@ bool EncryptionHandler::decryptMesh(uint8_t* encryptedDataPacket, uint16_t encry
 	return true;
 }
 
+bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encryptedDataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevelInPackage, uint32_t nonce) {
+	if (encryptedDataLength < SOC_ECB_CIPHERTEXT_LENGTH || targetLength < SOC_ECB_CIPHERTEXT_LENGTH) {
+		LOGe(STR_ERR_BUFFER_NOT_LARGE_ENOUGH);
+		return false;
+	}
+
+	// Sets the key in _block.
+	if (!_checkAndSetKey(userLevelInPackage)) {
+		return false;
+	}
+
+	// Set the IV in the cleartext. IV is simply nonce with zero padding, since the counter is 0.
+	memset(_block.cleartext, 0x00, SOC_ECB_CLEARTEXT_LENGTH);
+	memcpy(_block.cleartext, &nonce, sizeof(nonce));
+
+	// encrypts the cleartext and puts it in ciphertext
+	uint32_t errCode = sd_ecb_block_encrypt(&_block);
+	APP_ERROR_CHECK(errCode);
+
+	// XOR the ciphertext with the encrypted data to finish decrypting the block.
+	for (uint8_t i = 0; i < SOC_ECB_CIPHERTEXT_LENGTH; i++) {
+		target[i] = _block.ciphertext[i] ^ encryptedData[i];
+	}
+
+	return true;
+}
+
 
 bool EncryptionHandler::encrypt(uint8_t* data, uint16_t dataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevel, EncryptionType encryptionType) {
 	if (encryptionType == CTR || encryptionType == CTR_CAFEBABE) {

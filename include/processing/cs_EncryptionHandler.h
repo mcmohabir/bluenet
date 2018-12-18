@@ -91,6 +91,8 @@ public:
 	 */
 	bool decrypt(uint8_t* encryptedDataPacket, uint16_t encryptedDataPacketLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel& userLevelInPackage, EncryptionType encryptionType = CTR);
 
+	bool decryptBlockCTR(uint8_t* encryptedDataPacket, uint16_t encryptedDataPacketLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevelInPackage, uint32_t nonce);
+
 	/**
 	 * make sure we create a new nonce for each connection
 	 */
