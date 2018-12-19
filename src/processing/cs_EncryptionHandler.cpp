@@ -188,7 +188,7 @@ bool EncryptionHandler::decryptMesh(uint8_t* encryptedDataPacket, uint16_t encry
 	return true;
 }
 
-bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encryptedDataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevelInPackage, uint32_t nonce) {
+bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encryptedDataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevelInPackage, uint8_t* nonce, uint8_t nonceLength) {
 	if (encryptedDataLength < SOC_ECB_CIPHERTEXT_LENGTH || targetLength < SOC_ECB_CIPHERTEXT_LENGTH) {
 		LOGe(STR_ERR_BUFFER_NOT_LARGE_ENOUGH);
 		return false;
@@ -198,10 +198,14 @@ bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encrypt
 	if (!_checkAndSetKey(userLevelInPackage)) {
 		return false;
 	}
+//	LOGd("key:");
+//	BLEutil::printArray(_block.key, 16);
 
 	// Set the IV in the cleartext. IV is simply nonce with zero padding, since the counter is 0.
 	memset(_block.cleartext, 0x00, SOC_ECB_CLEARTEXT_LENGTH);
-	memcpy(_block.cleartext, &nonce, sizeof(nonce));
+	memcpy(_block.cleartext, nonce, nonceLength);
+//	LOGd("cleartext:");
+//	BLEutil::printArray(_block.cleartext, 16);
 
 	// encrypts the cleartext and puts it in ciphertext
 	uint32_t errCode = sd_ecb_block_encrypt(&_block);

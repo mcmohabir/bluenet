@@ -55,7 +55,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	BLEutil::printArray(services16bit.data, services16bit.len);
 
 	logSerial(SERIAL_DEBUG, "128bit services: ");
-	BLEutil::printArray(services128bit.data, services128bit.len);
+	BLEutil::printArray(services128bit.data, services128bit.len); // Reveived as uint128, so bytes are reversed.
 
 	if (services16bit.len < (CMD_ADV_NUM_SERVICES_16BIT * sizeof(uint16_t))) {
 		return;
@@ -63,8 +63,10 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 
 	CommandAdvertisementHeader header = CommandAdvertisementHeader();
 	bool foundSequences[CMD_ADV_NUM_SERVICES_16BIT] = { false };
+	uint8_t nonce[CMD_ADV_NUM_SERVICES_16BIT * sizeof(uint16_t)];
 	// Fill the struct with data from the 4 service UUIDs.
 	// Keep up which sequence numbers have been handled.
+	// Fill the nonce with the service data in the correct order.
 	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
 		uint16_t serviceUuid = ((uint16_t*)services16bit.data)[i];
 		LOGd("uuid=%u", serviceUuid);
@@ -76,20 +78,24 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 			header.protocol =    (serviceUuid >> 6)  & 0x00FF;
 			header.accessLevel = (serviceUuid >> 2)  & 0x000F;
 			header.profile =     (serviceUuid >> 0)  & 0x0003;
+			memcpy(nonce+0, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 1:
 			header.sequence1 = sequence;
 			header.type =        (serviceUuid >> 12) & 0x0003;
 			header.payload =     (serviceUuid >> 0)  & 0x0FFF;
+			memcpy(nonce+2, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 2:
 			header.sequence2 = sequence;
 			header.sphereId =    (serviceUuid >> 6)  & 0x00FF;
 			header.locationId =  (serviceUuid >> 0)  & 0x003F;
+			memcpy(nonce+4, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 3:
 			header.sequence3 = sequence;
 			header.time =        (serviceUuid >> 0)  & 0x3FFF;
+			memcpy(nonce+6, &serviceUuid, sizeof(uint16_t));
 			break;
 		}
 	}
@@ -98,7 +104,6 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 			return;
 		}
 	}
-
 
 //	uint8_t* pHeader = (uint8_t*)&header;
 //	LOGd("header pointer=%p size=%u", pHeader, sizeof(header));
@@ -120,7 +125,8 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	LOGd("  protocol=%u accessLevel=%u profile=%u", header.protocol, header.accessLevel, header.profile);
 	LOGd("  type=%u payload=%u", header.type, header.payload);
 	LOGd("  sphereId=%u locationId=%u time=%u", header.sphereId, header.locationId, header.time);
-
+//	logSerial(SERIAL_DEBUG, "nonce: ");
+//	BLEutil::printArray(nonce, sizeof(nonce));
 
 	uint8_t decryptedData[16];
 	EncryptionAccessLevel accessLevel;
@@ -134,18 +140,27 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	case 2:
 		accessLevel = GUEST;
 		break;
-//	case 100:
-//		accessLevel = SETUP;
-//		break;
+	case 8:
+		accessLevel = SETUP;
+		break;
 	default:
 		accessLevel = NOT_SET;
 		break;
 	}
 
-	uint8_t type =  services128bit.data[4];
-	uint16_t length = services128bit.len - 5;
-	uint8_t* commandData = services128bit.data + 5;
-	uint32_t nonce = 0;
+	if (!EncryptionHandler::getInstance().decryptBlockCTR(services128bit.data, services128bit.len, decryptedData, 16, accessLevel, nonce, sizeof(nonce))) {
+		return;
+	}
+	logSerial(SERIAL_DEBUG, "decrypted data: ");
+	BLEutil::printArray(decryptedData, 16);
+
+	uint32_t validation = *((uint32_t*)decryptedData);
+	uint8_t type = decryptedData[4];
+	uint16_t length = 16 - 5;
+	uint8_t* commandData = decryptedData + 5;
+	LOGd("validation=%u type=%u length=%u data:", validation, type, length);
+	BLEutil::printArray(commandData, length);
+
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
 	switch (type) {
 	case 1:
@@ -157,12 +172,6 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		return;
 	}
 	CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
-
-	if (!EncryptionHandler::getInstance().decryptBlockCTR(services128bit.data, services128bit.len, decryptedData, 16, accessLevel, nonce)) {
-		return;
-	}
-	logSerial(SERIAL_DEBUG, "decrypted data: ");
-	BLEutil::printArray(decryptedData, 16);
 }
 
 void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t length) {
