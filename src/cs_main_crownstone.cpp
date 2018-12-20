@@ -37,6 +37,7 @@
 #include "util/cs_Utils.h"
 #include "protocol/cs_UartProtocol.h"
 #include "processing/cs_CommandAdvertisementHandler.h"
+#include "processing/cs_BackgroundAdvertisementHandler.h"
 
 extern "C" {
 #include <nrf_nvmc.h>
@@ -648,6 +649,7 @@ void Crownstone::startUp() {
 			uint16_t delay = rng.getRandom16() / 6; // Delay in ms (about 0-10 seconds)
 			_scanner->delayedStart(delay);
 			CommandAdvertisementHandler::getInstance();
+			BackgroundAdvertisementHandler::getInstance();
 		}
 
 //		if (_settings->isSet(CONFIG_TRACKER_ENABLED)) {

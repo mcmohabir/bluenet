@@ -41,6 +41,7 @@ LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_Setup.cpp")
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_TemperatureGuard.cpp")
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_RecognizeSwitch.cpp")
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_CommandAdvertisementHandler.cpp")
+LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_BackgroundAdvertisementHandler.cpp")
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/protocol/cs_UartProtocol.cpp")
 
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/third/SortMedian.cc")
