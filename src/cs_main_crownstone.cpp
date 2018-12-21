@@ -650,6 +650,7 @@ void Crownstone::startUp() {
 			_scanner->delayedStart(delay);
 			CommandAdvertisementHandler::getInstance();
 			BackgroundAdvertisementHandler::getInstance();
+			EncryptionHandler::getInstance().RC5InitKey(GUEST); // BackgroundAdvertisementHandler needs RC5.
 		}
 
 //		if (_settings->isSet(CONFIG_TRACKER_ENABLED)) {
