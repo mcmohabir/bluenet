@@ -55,7 +55,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	BLEutil::printArray(services16bit.data, services16bit.len);
 
 	logSerial(SERIAL_DEBUG, "128bit services: ");
-	BLEutil::printArray(services128bit.data, services128bit.len); // Reveived as uint128, so bytes are reversed.
+	BLEutil::printArray(services128bit.data, services128bit.len); // Received as uint128, so bytes are reversed.
 
 	if (services16bit.len < (CMD_ADV_NUM_SERVICES_16BIT * sizeof(uint16_t))) {
 		return;
@@ -64,6 +64,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	CommandAdvertisementHeader header = CommandAdvertisementHeader();
 	bool foundSequences[CMD_ADV_NUM_SERVICES_16BIT] = { false };
 	uint8_t nonce[CMD_ADV_NUM_SERVICES_16BIT * sizeof(uint16_t)];
+	uint16_t encryptedPayloadRC5[2];
 	// Fill the struct with data from the 4 service UUIDs.
 	// Keep up which sequence numbers have been handled.
 	// Fill the nonce with the service data in the correct order.
@@ -75,26 +76,25 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		switch (sequence) {
 		case 0:
 			header.sequence0 = sequence;
-			header.protocol =    (serviceUuid >> 6)  & 0x00FF;
-			header.accessLevel = (serviceUuid >> 2)  & 0x000F;
-			header.profile =     (serviceUuid >> 0)  & 0x0003;
+			header.protocol =    (serviceUuid >> (16-2-3)) & 0x07;
+			header.sphereId =    (serviceUuid >> (16-2-3-8)) & 0xFF;
+			header.accessLevel = (serviceUuid >> (16-2-3-8-3)) & 0x07;
 			memcpy(nonce+0, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 1:
-			header.sequence1 = sequence;
-			header.type =        (serviceUuid >> 12) & 0x0003;
-			header.payload =     (serviceUuid >> 0)  & 0x0FFF;
+//			header.sequence1 = sequence;
+			encryptedPayloadRC5[0] = ((serviceUuid >> 0) & 0x0F) << (16-4);   // Last 4 bits of this service UUID are first 4 bits of encrypted payload[0].
 			memcpy(nonce+2, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 2:
-			header.sequence2 = sequence;
-			header.sphereId =    (serviceUuid >> 6)  & 0x00FF;
-			header.locationId =  (serviceUuid >> 0)  & 0x003F;
+//			header.sequence2 = sequence;
+			encryptedPayloadRC5[0] = ((serviceUuid >> (16-2)) & 0x0FFF) << 0; // Bits 2 - 13 of this service UUID are last 12 bits of encrypted payload[0].
+			encryptedPayloadRC5[1] = ((serviceUuid >> 0) & 0x03) << (16-2);   // Last 2 bits of this service UUID are first 2 bits of encrypted payload[1].
 			memcpy(nonce+4, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 3:
-			header.sequence3 = sequence;
-			header.time =        (serviceUuid >> 0)  & 0x3FFF;
+//			header.sequence3 = sequence;
+			encryptedPayloadRC5[1] = ((serviceUuid >> 0) & 0x3FFF) << 0;      // Last 14 bits of this service UUID are last 14 bits of encrypted payload[1].
 			memcpy(nonce+6, &serviceUuid, sizeof(uint16_t));
 			break;
 		}
@@ -122,13 +122,10 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 //				);
 //	}
 //	_logSerial(SERIAL_DEBUG, SERIAL_CRLF);
-	LOGd("  protocol=%u accessLevel=%u profile=%u", header.protocol, header.accessLevel, header.profile);
-	LOGd("  type=%u payload=%u", header.type, header.payload);
-	LOGd("  sphereId=%u locationId=%u time=%u", header.sphereId, header.locationId, header.time);
+	LOGd("protocol=%u sphereId=%u accessLevel=%u", header.protocol, header.sphereId, header.accessLevel);
 //	logSerial(SERIAL_DEBUG, "nonce: ");
 //	BLEutil::printArray(nonce, sizeof(nonce));
 
-	uint8_t decryptedData[16];
 	EncryptionAccessLevel accessLevel;
 	switch(header.accessLevel) {
 	case 0:
@@ -140,14 +137,18 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	case 2:
 		accessLevel = GUEST;
 		break;
-	case 8:
+	case 4:
 		accessLevel = SETUP;
 		break;
 	default:
 		accessLevel = NOT_SET;
 		break;
 	}
+	if (accessLevel == NOT_SET) {
+		return;
+	}
 
+	uint8_t decryptedData[16];
 	if (!EncryptionHandler::getInstance().decryptBlockCTR(services128bit.data, services128bit.len, decryptedData, 16, accessLevel, nonce, sizeof(nonce))) {
 		return;
 	}
@@ -171,7 +172,20 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	if (commandType == CMD_UNKNOWN) {
 		return;
 	}
-	CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
+
+	errCode = CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
+	if (errCode != ERR_SUCCESS) {
+		return;
+	}
+
+	uint16_t decryptedPayloadRC5[2];
+	EncryptionHandler::getInstance().RC5Decrypt(encryptedPayloadRC5, sizeof(encryptedPayloadRC5), decryptedPayloadRC5, sizeof(decryptedPayloadRC5));
+	PayloadRC5 payloadRC5;
+	payloadRC5.locationId = (decryptedPayloadRC5[1] >> (16-6)) & 0x3F;
+	payloadRC5.profileId =  (decryptedPayloadRC5[1] >> (16-6-3)) & 0x07;
+	payloadRC5.rssiOffset = (decryptedPayloadRC5[1] >> (16-6-3-4)) & 0x0F;
+	payloadRC5.flags =      (decryptedPayloadRC5[1] >> (16-6-3-4-3)) & 0x07;
+	LOGd("locationId=%u profileId=%u rssiOffset=%u flags=%u", payloadRC5.locationId, payloadRC5.profileId, payloadRC5.rssiOffset, payloadRC5.flags);
 }
 
 void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t length) {

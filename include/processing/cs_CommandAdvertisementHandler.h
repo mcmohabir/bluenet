@@ -15,21 +15,27 @@
 
 struct __attribute__((__packed__)) CommandAdvertisementHeader {
 	uint8_t sequence0 : 2;
-	uint8_t protocol : 8;
-	uint8_t accessLevel : 4;
-	uint8_t profile : 2;
-
-
-	uint8_t sequence1 : 2;
-	uint8_t type : 2;
-	uint16_t payload : 12;
-
-	uint8_t sequence2 : 2;
+	uint8_t protocol : 3;
 	uint8_t sphereId : 8;
-	uint8_t locationId: 6;
+	uint8_t accessLevel : 3;
+//
+//	uint8_t sequence1 : 2;
+//	uint16_t reserved : 10;
+//	uint16_t payload1 : 4;
+//
+//	uint8_t sequence2 : 2;
+//	uint16_t payload2 : 14;
+//
+//	uint8_t sequence3 : 2;
+//	uint16_t payload3 : 14;
+};
 
-	uint8_t sequence3 : 2;
-	uint16_t time : 14;
+struct __attribute__((__packed__)) PayloadRC5 {
+	uint8_t locationId : 6;
+	uint8_t profileId : 3;
+	int8_t rssiOffset : 4;
+	uint8_t flags : 3;
+	// 16bit reserved
 };
 
 class CommandAdvertisementHandler : public EventListener {
