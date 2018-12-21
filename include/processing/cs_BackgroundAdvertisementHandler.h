@@ -20,7 +20,7 @@
 struct __attribute__((__packed__)) BackgroundAdvertisement {
 	uint8_t protocol : 2;
 	uint8_t sphereId : 8;
-	uint32_t encryptedData : 32;
+	uint16_t encryptedData[2];
 };
 
 class BackgroundAdvertisementHandler : public EventListener {
