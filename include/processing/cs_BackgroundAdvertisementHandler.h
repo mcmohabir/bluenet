@@ -23,6 +23,13 @@ struct __attribute__((__packed__)) BackgroundAdvertisement {
 	uint16_t encryptedData[2];
 };
 
+struct __attribute__((__packed__)) BackgroundAdvertisementPayload {
+	uint8_t locationId : 6;
+	uint8_t profileId : 3;
+	int8_t rssiOffset : 4;
+	uint8_t flags : 3;
+};
+
 class BackgroundAdvertisementHandler : public EventListener {
 public:
 	static BackgroundAdvertisementHandler& getInstance() {

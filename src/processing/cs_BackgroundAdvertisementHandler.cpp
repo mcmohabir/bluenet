@@ -89,6 +89,13 @@ void BackgroundAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t
 //	EncryptionHandler::getInstance().RC5Decrypt(bgAdvData.encryptedData, 2*sizeof(uint16_t), decryptedData, 2*sizeof(uint16_t))
 	EncryptionHandler::getInstance().RC5Decrypt(bgAdvData.encryptedData, sizeof(bgAdvData.encryptedData), decryptedData, sizeof(decryptedData));
 	LOGd("decrypted=%u %u", decryptedData[0], decryptedData[1]);
+
+	BackgroundAdvertisementPayload payload;
+	payload.locationId = (decryptedData[1] >> (16-6)) & 0x3F;
+	payload.profileId =  (decryptedData[1] >> (16-6-3)) & 0x07;
+	payload.rssiOffset = (decryptedData[1] >> (16-6-3-4)) & 0x0F;
+	payload.flags =      (decryptedData[1] >> (16-6-3-4-3)) & 0x07;
+	LOGd("validation=%u locationId=%u profileId=%u rssiOffset=%u flags=%u", decryptedData[0], payload.locationId, payload.profileId, payload.rssiOffset, payload.flags);
 }
 
 
