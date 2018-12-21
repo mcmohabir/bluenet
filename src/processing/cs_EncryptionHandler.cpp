@@ -13,6 +13,15 @@
 
 //#define TESTING_ENCRYPTION true
 
+// Rotate functions for 16 bit integers
+#define ROTL_16BIT(x,s) ((x)<<(s) | (x)>>(16-(s)))
+#define ROTR_16BIT(x,s) ((x)>>(s) | (x)<<(16-(s)))
+
+// Magic numbers for RC5 with 16 bit words.
+#define RC5_16BIT_P 0xB7E1
+#define RC5_16BIT_Q 0x9E37
+
+
 
 void EncryptionHandler::init() {
 	_defaultValidationKey.b = DEFAULT_SESSION_KEY;
@@ -188,14 +197,14 @@ bool EncryptionHandler::decryptMesh(uint8_t* encryptedDataPacket, uint16_t encry
 	return true;
 }
 
-bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encryptedDataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel userLevelInPackage, uint8_t* nonce, uint8_t nonceLength) {
+bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encryptedDataLength, uint8_t* target, uint16_t targetLength, EncryptionAccessLevel accessLevel, uint8_t* nonce, uint8_t nonceLength) {
 	if (encryptedDataLength < SOC_ECB_CIPHERTEXT_LENGTH || targetLength < SOC_ECB_CIPHERTEXT_LENGTH) {
 		LOGe(STR_ERR_BUFFER_NOT_LARGE_ENOUGH);
 		return false;
 	}
 
 	// Sets the key in _block.
-	if (!_checkAndSetKey(userLevelInPackage)) {
+	if (!_checkAndSetKey(accessLevel)) {
 		return false;
 	}
 //	LOGd("key:");
@@ -216,6 +225,60 @@ bool EncryptionHandler::decryptBlockCTR(uint8_t* encryptedData, uint16_t encrypt
 		target[i] = _block.ciphertext[i] ^ encryptedData[i];
 	}
 
+	return true;
+}
+
+bool EncryptionHandler::RC5InitKey(EncryptionAccessLevel accessLevel) {
+	// Sets the key in _block.
+	if (!_checkAndSetKey(accessLevel)) {
+		return false;
+	}
+	return _RC5PrepareKey(_block.key, SOC_ECB_KEY_LENGTH);
+}
+
+bool EncryptionHandler::RC5Decrypt(uint16_t* encryptedData, uint16_t encryptedDataLength, uint16_t* target, uint16_t targetLength) {
+	if (encryptedDataLength != 4 || targetLength != 4) {
+		return false;
+	}
+	uint16_t a = encryptedData[0];
+	uint16_t b = encryptedData[1];
+	for (uint16_t i=RC5_ROUNDS; i>0; --i) {
+		b = ROTR_16BIT(b - _rc5SubKeys[2*i + 1], a % 16) ^ a;
+		a = ROTR_16BIT(a - _rc5SubKeys[2*i    ], b % 16) ^ b;
+	}
+	target[0] = a - _rc5SubKeys[0];
+	target[1] = b - _rc5SubKeys[1];
+	return true;
+}
+
+bool EncryptionHandler::_RC5PrepareKey(uint8_t* key, uint8_t keyLength) {
+	if (keyLength != RC5_KEYLEN) {
+		return false;
+	}
+	int keyLenWords = ((RC5_KEYLEN-1)/sizeof(uint16_t))+1; // c - The length of the key in words (or 1, if keyLength = 0).
+	int loops = 3 * (RC5_NUM_SUBKEYS > keyLenWords ? RC5_NUM_SUBKEYS : keyLenWords);
+	uint16_t L[keyLenWords]; // L[] - A temporary working array used during key scheduling. initialized to the key in words.
+
+	memcpy((uint8_t*)(&L), key, keyLength);
+
+
+	_rc5SubKeys[0] = RC5_16BIT_P;
+	for (int i = 1; i < RC5_NUM_SUBKEYS; i++) {
+		_rc5SubKeys[i] = _rc5SubKeys[i-1] + RC5_16BIT_Q;
+	}
+
+	uint16_t i = 0;
+	uint16_t j = 0;
+	uint16_t a = 0;
+	uint16_t b = 0;
+	for (int n=0; n<loops; ++n) {
+		a = _rc5SubKeys[i] = ROTL_16BIT(_rc5SubKeys[i] + a + b, 3);
+		b = L[j] = ROTL_16BIT(L[j] + a + b, (a+b) % 16);
+		++i;
+		++j;
+		i %= RC5_NUM_SUBKEYS;
+		j %= keyLenWords;
+	}
 	return true;
 }
 
