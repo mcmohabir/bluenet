@@ -30,14 +30,6 @@ struct __attribute__((__packed__)) CommandAdvertisementHeader {
 //	uint16_t payload3 : 14;
 };
 
-struct __attribute__((__packed__)) PayloadRC5 {
-	uint8_t locationId : 6;
-	uint8_t profileId : 3;
-	int8_t rssiOffset : 4;
-	uint8_t flags : 3;
-	// 16bit reserved
-};
-
 class CommandAdvertisementHandler : public EventListener {
 public:
 	static CommandAdvertisementHandler& getInstance() {

@@ -9,12 +9,6 @@
 #include "events/cs_EventListener.h"
 #include "ble/cs_Nordic.h"
 
-//struct __attribute__((__packed__)) t2t_entry_t {
-//	uint32_t lastTimestamp;
-//	uint8_t address[BLE_GAP_ADDR_LEN];
-//	int16_t avgRssi; // rssi multiplied by 256
-//};
-
 struct __attribute__((__packed__)) t2t_entry_t {
 	uint8_t address[BLE_GAP_ADDR_LEN];
 	uint8_t score; // Score that decreases every tick, and increases when rssi is above threshold.
@@ -32,7 +26,6 @@ public:
 
 private:
 	t2t_entry_t list[T2T_LIST_COUNT];
-//	uint32_t timeoutTicks;
 	int8_t rssiThreshold = -50;
 	uint8_t scoreIncrement = 2; // Score is increased with this value when rssi is above rssi threshold.
 	uint8_t scoreThreshold = 2; // Threshold above which the toggle is triggered.
