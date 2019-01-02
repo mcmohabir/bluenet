@@ -16,19 +16,19 @@
 #define BACKGROUND_SERVICES_MASK_HEADER_LEN 3
 #define BACKGROUND_SERVICES_MASK_LEN 16
 
-// 42 bits, so it fits 3 times in 128 bits.
-struct __attribute__((__packed__)) BackgroundAdvertisement {
-	uint8_t protocol : 2;
-	uint8_t sphereId : 8;
-	uint16_t encryptedData[2];
-};
+//// 42 bits, so it fits 3 times in 128 bits.
+//struct __attribute__((__packed__)) BackgroundAdvertisement {
+//	uint8_t protocol : 2;
+//	uint8_t sphereId : 8;
+//	uint16_t encryptedData[2];
+//};
 
-struct __attribute__((__packed__)) BackgroundAdvertisementPayload {
-	uint8_t locationId : 6;
-	uint8_t profileId : 3;
-	int8_t rssiOffset : 4;
-	uint8_t flags : 3;
-};
+//struct __attribute__((__packed__)) BackgroundAdvertisementPayload {
+//	uint8_t locationId : 6;
+//	uint8_t profileId : 3;
+//	int8_t rssiOffset : 4;
+//	uint8_t flags : 3;
+//};
 
 class BackgroundAdvertisementHandler : public EventListener {
 public:
@@ -43,6 +43,8 @@ private:
 	BackgroundAdvertisementHandler();
 
 	void parseAdvertisement(ble_gap_evt_adv_report_t* advReport);
+	void handleBackgroundAdvertisement(evt_adv_background_t* backgroundAdvertisement);
+	void adjustRssi(evt_adv_background_t* backgroundAdvertisement, const evt_adv_background_payload_t& payload);
 };
 
 

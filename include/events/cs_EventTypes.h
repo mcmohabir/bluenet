@@ -75,6 +75,8 @@ enum GeneralEventType {
 	EVT_STORAGE_WRITE, // Sent when an item is going to be written to storage.
 	EVT_STORAGE_ERASE, // Sent when a flash page is going to be erased.
 	EVT_ADC_RESTARTED, // Sent when ADC has been restarted: the next buffer is expected to be different from the previous ones.
+	EVT_ADV_BACKGROUND, // Sent when a background advertisement has been received. Data: evt_adv_background_t with encrypted payload as data.
+	EVT_ADV_BACKGROUND_PARSED, // Sent when a background advertisement has been validated and parsed. Data: evt_adv_background_t with parsed payload as data.
 	EVT_ALL = 0xFFFF
 };
 
@@ -100,4 +102,20 @@ enum UartEventType {
 struct __attribute__((packed)) evt_do_reset_delayed_t {
 	uint8_t resetCode;
 	uint16_t delayMs;
+};
+
+struct __attribute__((__packed__)) evt_adv_background_t {
+	uint8_t protocol;
+	uint8_t sphereId;
+	uint8_t* data;
+	uint8_t dataSize;
+	uint8_t* macAddress;
+	int8_t rssi;
+};
+
+struct __attribute__((__packed__)) evt_adv_background_payload_t {
+	uint8_t locationId;
+	uint8_t profileId;
+	int8_t rssiOffset;
+	uint8_t flags;
 };

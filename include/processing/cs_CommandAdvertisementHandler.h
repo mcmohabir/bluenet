@@ -49,8 +49,11 @@ public:
 
 private:
 	CommandAdvertisementHandler();
+	uint32_t lastVerifiedData; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
 
 	void parseAdvertisement(ble_gap_evt_adv_report_t* advReport);
+	void handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload);
+	void handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]);
 };
 
 

@@ -78,32 +78,70 @@ void BackgroundAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t
 	uint64_t result = ((part1 & part2) | (part2 & part3) | (part1 & part3)); // The majority vote
 
 	// Parse the resulting data.
-	BackgroundAdvertisement bgAdvData;
-	bgAdvData.protocol = (result >> (42-2)) & 0x03;
-	bgAdvData.sphereId = (result >> (42-2-8)) & 0xFF;
-	bgAdvData.encryptedData[0] = (result >> (42-2-8-16)) & 0xFFFF;
-	bgAdvData.encryptedData[1] = (result >> (42-2-8-32)) & 0xFFFF;
-	LOGd("protocol=%u sphereId=%u encryptedData=%u", bgAdvData.protocol, bgAdvData.sphereId, bgAdvData.encryptedData);
-
-	uint16_t decryptedData[2];
-//	EncryptionHandler::getInstance().RC5Decrypt(bgAdvData.encryptedData, 2*sizeof(uint16_t), decryptedData, 2*sizeof(uint16_t))
-	EncryptionHandler::getInstance().RC5Decrypt(bgAdvData.encryptedData, sizeof(bgAdvData.encryptedData), decryptedData, sizeof(decryptedData));
-	LOGd("decrypted=%u %u", decryptedData[0], decryptedData[1]);
-
-	BackgroundAdvertisementPayload payload;
-	payload.locationId = (decryptedData[1] >> (16-6)) & 0x3F;
-	payload.profileId =  (decryptedData[1] >> (16-6-3)) & 0x07;
-	payload.rssiOffset = (decryptedData[1] >> (16-6-3-4)) & 0x0F;
-	payload.flags =      (decryptedData[1] >> (16-6-3-4-3)) & 0x07;
-	LOGd("validation=%u locationId=%u profileId=%u rssiOffset=%u flags=%u", decryptedData[0], payload.locationId, payload.profileId, payload.rssiOffset, payload.flags);
+	evt_adv_background_t backgroundAdvertisement;
+	uint16_t encryptedPayload[2];
+	backgroundAdvertisement.protocol = (result >> (42-2)) & 0x03;
+	backgroundAdvertisement.sphereId = (result >> (42-2-8)) & 0xFF;
+	encryptedPayload[0] = (result >> (42-2-8-16)) & 0xFFFF;
+	encryptedPayload[1] = (result >> (42-2-8-32)) & 0xFFFF;
+	backgroundAdvertisement.data = (uint8_t*)encryptedPayload;
+	backgroundAdvertisement.dataSize = sizeof(encryptedPayload);
+	backgroundAdvertisement.macAddress = advReport->peer_addr.addr;
+	backgroundAdvertisement.rssi = advReport->rssi;
+	handleBackgroundAdvertisement(&backgroundAdvertisement);
 }
 
+void BackgroundAdvertisementHandler::handleBackgroundAdvertisement(evt_adv_background_t* backgroundAdvertisement) {
+	if (backgroundAdvertisement->dataSize != sizeof(uint16_t) * 2) {
+		return;
+	}
+	logSerial(SERIAL_DEBUG, "bg adv: ");
+	_logSerial(SERIAL_DEBUG, "protocol=%u sphereId=%u rssi=%i ", backgroundAdvertisement->protocol, backgroundAdvertisement->sphereId, backgroundAdvertisement->rssi);
+	_logSerial(SERIAL_DEBUG, "encrypted data=[%u %u] address=", ((uint16_t*)(backgroundAdvertisement->data))[0], ((uint16_t*)(backgroundAdvertisement->data))[1]);
+	BLEutil::printAddress(backgroundAdvertisement->macAddress, BLE_GAP_ADDR_LEN);
+
+	// TODO: can decrypt to same buffer?
+	uint16_t decryptedPayload[2];
+	EncryptionHandler::getInstance().RC5Decrypt((uint16_t*)(backgroundAdvertisement->data), backgroundAdvertisement->dataSize, decryptedPayload, sizeof(decryptedPayload));
+	LOGd("decrypted=[%u %u]", decryptedPayload[0], decryptedPayload[1]);
+
+//	BackgroundAdvertisementPayload payload;
+	evt_adv_background_payload_t payload;
+	payload.locationId = (decryptedPayload[1] >> (16-6)) & 0x3F;
+	payload.profileId =  (decryptedPayload[1] >> (16-6-3)) & 0x07;
+	payload.rssiOffset = (decryptedPayload[1] >> (16-6-3-4)) & 0x0F;
+	payload.flags =      (decryptedPayload[1] >> (16-6-3-4-3)) & 0x07;
+	backgroundAdvertisement->data = (uint8_t*)(&payload);
+	backgroundAdvertisement->dataSize = sizeof(payload);
+	adjustRssi(backgroundAdvertisement, payload);
+	LOGd("validation=%u locationId=%u profileId=%u rssiOffset=%u flags=%u", decryptedPayload[0], payload.locationId, payload.profileId, payload.rssiOffset, payload.flags);
+	EventDispatcher::getInstance().dispatch(EVT_ADV_BACKGROUND_PARSED, backgroundAdvertisement, sizeof(*backgroundAdvertisement));
+}
+
+void BackgroundAdvertisementHandler::adjustRssi(evt_adv_background_t* backgroundAdvertisement, const evt_adv_background_payload_t& payload) {
+	int16_t rssi = backgroundAdvertisement->rssi;
+	rssi += payload.rssiOffset;
+	if (rssi > -1) {
+		rssi = -1;
+	}
+	if (rssi < -127) {
+		rssi = -127;
+	}
+	backgroundAdvertisement->rssi = rssi;
+}
 
 void BackgroundAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t length) {
 	switch(evt) {
 	case EVT_DEVICE_SCANNED: {
 		ble_gap_evt_adv_report_t* advReport = (ble_gap_evt_adv_report_t*)data;
 		parseAdvertisement(advReport);
+		break;
+	}
+	case EVT_ADV_BACKGROUND: {
+		if (length != sizeof(evt_adv_background_t)) {
+			return;
+		}
+		handleBackgroundAdvertisement((evt_adv_background_t*) data);
 		break;
 	}
 	}

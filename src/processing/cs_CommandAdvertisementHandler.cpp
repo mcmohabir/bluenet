@@ -126,6 +126,21 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 //	logSerial(SERIAL_DEBUG, "nonce: ");
 //	BLEutil::printArray(nonce, sizeof(nonce));
 
+	handleEncryptedRC5Payload(advReport, header, encryptedPayloadRC5);
+
+	data_t nonceData;
+	nonceData.data = nonce;
+	nonceData.len = sizeof(nonce);
+	handleEncryptedCommandPayload(header, nonceData, services128bit);
+}
+
+void CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
+	uint32_t errCode;
+	if (memcmp(encryptedPayload.data, &lastVerifiedData, sizeof(lastVerifiedData)) == 0) {
+		// Ignore this command, as it has already been handled.
+		return;
+	}
+
 	EncryptionAccessLevel accessLevel;
 	switch(header.accessLevel) {
 	case 0:
@@ -148,8 +163,9 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		return;
 	}
 
+	// TODO: can decrypt to same buffer?
 	uint8_t decryptedData[16];
-	if (!EncryptionHandler::getInstance().decryptBlockCTR(services128bit.data, services128bit.len, decryptedData, 16, accessLevel, nonce, sizeof(nonce))) {
+	if (!EncryptionHandler::getInstance().decryptBlockCTR(encryptedPayload.data, encryptedPayload.len, decryptedData, 16, accessLevel, nonce.data, nonce.len)) {
 		return;
 	}
 	logSerial(SERIAL_DEBUG, "decrypted data: ");
@@ -161,6 +177,11 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	uint8_t* commandData = decryptedData + 5;
 	LOGd("validation=%u type=%u length=%u data:", validation, type, length);
 	BLEutil::printArray(commandData, length);
+
+	// TODO: validate.
+
+	// After validation, remember the last verified data.
+	memcpy(&lastVerifiedData, encryptedPayload.data, sizeof(lastVerifiedData));
 
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
 	switch (type) {
@@ -177,15 +198,20 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	if (errCode != ERR_SUCCESS) {
 		return;
 	}
+}
 
-	uint16_t decryptedPayloadRC5[2];
-	EncryptionHandler::getInstance().RC5Decrypt(encryptedPayloadRC5, sizeof(encryptedPayloadRC5), decryptedPayloadRC5, sizeof(decryptedPayloadRC5));
-	PayloadRC5 payloadRC5;
-	payloadRC5.locationId = (decryptedPayloadRC5[1] >> (16-6)) & 0x3F;
-	payloadRC5.profileId =  (decryptedPayloadRC5[1] >> (16-6-3)) & 0x07;
-	payloadRC5.rssiOffset = (decryptedPayloadRC5[1] >> (16-6-3-4)) & 0x0F;
-	payloadRC5.flags =      (decryptedPayloadRC5[1] >> (16-6-3-4-3)) & 0x07;
-	LOGd("locationId=%u profileId=%u rssiOffset=%u flags=%u", payloadRC5.locationId, payloadRC5.profileId, payloadRC5.rssiOffset, payloadRC5.flags);
+void CommandAdvertisementHandler::handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]) {
+	evt_adv_background_t backgroundAdv;
+	switch (header.protocol) {
+	case 1:
+		backgroundAdv.protocol = 1;
+	}
+	backgroundAdv.sphereId = header.sphereId;
+	backgroundAdv.data = (uint8_t*)(&encryptedPayload);
+	backgroundAdv.dataSize = sizeof(uint16_t) * 2; // Can't use sizeof(encryptedPayload) as that returns size of pointer.
+	backgroundAdv.macAddress = advReport->peer_addr.addr;
+	backgroundAdv.rssi = advReport->rssi;
+	EventDispatcher::getInstance().dispatch(EVT_ADV_BACKGROUND, &backgroundAdv, sizeof(backgroundAdv));
 }
 
 void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t length) {
