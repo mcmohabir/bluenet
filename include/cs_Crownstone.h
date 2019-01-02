@@ -50,7 +50,7 @@
  * Main functionality
  ** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** */
 
-#define CROWNSTONE_UPDATE_FREQUENCY 2 //! hz
+#define CROWNSTONE_UPDATE_FREQUENCY 2 // In Hz. If changed, make sure you update the tick function accordingly.
 
 /**
  * Crownstone encapsulates all functionality, stack, services, and configuration.
@@ -179,7 +179,7 @@ private:
 	app_timer_id_t           _mainTimerId;
 
 	uint8_t _operationMode;
-
+	uint8_t _tickCount = 0;
 };
 
 

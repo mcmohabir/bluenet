@@ -38,6 +38,7 @@
 #include "protocol/cs_UartProtocol.h"
 #include "processing/cs_CommandAdvertisementHandler.h"
 #include "processing/cs_BackgroundAdvertisementHandler.h"
+#include "processing/cs_TapToToggle.h"
 
 extern "C" {
 #include <nrf_nvmc.h>
@@ -650,6 +651,7 @@ void Crownstone::startUp() {
 			_scanner->delayedStart(delay);
 			CommandAdvertisementHandler::getInstance();
 			BackgroundAdvertisementHandler::getInstance();
+			TapToToggle::getInstance();
 			EncryptionHandler::getInstance().RC5InitKey(GUEST); // BackgroundAdvertisementHandler needs RC5.
 		}
 
@@ -735,6 +737,7 @@ void Crownstone::tick() {
 //	}
 
 	scheduleNextTick();
+	EventDispatcher::getInstance().dispatch(EVT_TICK_500_MS);
 }
 
 void Crownstone::scheduleNextTick() {

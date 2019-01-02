@@ -75,6 +75,7 @@ enum GeneralEventType {
 	EVT_STORAGE_WRITE, // Sent when an item is going to be written to storage.
 	EVT_STORAGE_ERASE, // Sent when a flash page is going to be erased.
 	EVT_ADC_RESTARTED, // Sent when ADC has been restarted: the next buffer is expected to be different from the previous ones.
+	EVT_TICK_500_MS, // Sent about every 500 ms.
 	EVT_ADV_BACKGROUND, // Sent when a background advertisement has been received. Data: evt_adv_background_t with encrypted payload as data.
 	EVT_ADV_BACKGROUND_PARSED, // Sent when a background advertisement has been validated and parsed. Data: evt_adv_background_t with parsed payload as data.
 	EVT_ALL = 0xFFFF
