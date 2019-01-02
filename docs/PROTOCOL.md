@@ -8,6 +8,7 @@ This only documents the latest service data protocol, older versions can be foun
 - [Setup](#setup). How to setup the crownstone.
 - [Encryption](#encryption). How to encrypt and decrypt the data.
 - [Advertisements](#advertisement_data). What data is broadcasted by the crownstones.
+- [Scanning](#scanning). What advertisement data is scanned for by the crownstones.
 - [Services and characteristics](#services). Which Bluetooth GATT services and characteristics the crownstones have.
 - [Data structures](#data_structs). The data structures used for the characteristics, advertisements, and mesh.
 
@@ -209,6 +210,128 @@ Bit | Name |  Description
 5 | Switchcraft | If this is 1, switchcraft is enabled on this Crownstone.
 6 | Reserved | Reserved for future use.
 7 | Reserved | Reserved for future use.
+
+<a name="scanning"></a>
+# Scanning
+The Crownstones will be scanning for advertisements broadcasted by the phone.
+
+## Command advertisements
+These are meant to be broadcasted by phones for specific commands.
+
+<a name="command_advertisement"></a>
+#### Command advertisement
+
+Type | Name | Length | Description
+--- | --- | --- | ---
+uint8 | AD Length | 1 | 9: Length of the next AD structure.
+uint8 | AD Type | 1 | 0x03: Complete list of 16 bit service UUIDs.
+uint16 [] | 16bit services | 8 | List of four 16 bit service UUIDs, which are used as header data.
+uint8 | AD Length | 1 | 17: Length of the next AD structure.
+uint8 | AD Type | 1 | 0x07: Complete list of 128 bit service UUIDs.
+uint64[] | 128bit service | 16 | Single 128 bit service UUID, which is used as encrypted payload, sent as two uint64.
+
+<a name="command_adv_header"></a>
+#### Command advertisement header
+
+Type | Name | Length in bits | Description
+--- | --- | --- | ---
+uint8 | Sequence | 2 | 0: Sequence of this service UUID.
+uint8 | Protocol | 3 | Protocol version.
+uint8 | Sphere ID | 8 | Hash of the sphere ID.
+uint8 | Access level | 3 | Shortened access level: 0=admin, 1=member, 2=guest, 4=setup.
+uint8 | Sequence | 2 | 1: Sequence of this service UUID.
+uint16 | Reserved | 10 | Reserved for future use.
+uint16 | Background payload | 4 | First 4 bits of first block of [encrypted background payload](#background_adv_data).
+uint8 | Sequence | 2 | 2: Sequence of this service UUID.
+uint16 | Background payload | 12 | Last 12 bits of first block of [encrypted background payload](#background_adv_data).
+uint16 | Background payload | 2 | First 2 bits of second block of [encrypted background payload](#background_adv_data).
+uint8 | Sequence | 2 | 3: Sequence of this service UUID.
+uint16 | Background payload | 14 | Last 14 bits of second block of [encrypted background payload](#background_adv_data).
+
+<a name="command_adv_payload"></a>
+#### Command advertisement payload
+
+Type | Name | Length | Description
+--- | --- | --- | ---
+uint32 | Validation | 4 | Validation in the form of a local time unix timestamp.
+uint8 | Command type | 1 | See the list of [types](#command_adv_types).
+uint8[] | Command data | 11 | Or less data, depends on command type. 
+
+<a name="command_adv_types"></a>
+#### Command advertisement types
+
+Type nr | Type name | Payload type | Payload Description | A | M | G | S
+--- | --- | --- | --- | :---: | :---: | :---: | :--:
+1 | Multi switch | [Multi switch short list packet](#multi_switch_short_list_packet) | List of switch commands | x | x | x |
+
+
+<a name="multi_switch_short_list_packet"></a>
+##### Multi switch short list packet
+
+Type | Name | Length | Description
+--- | --- | --- | ---
+uint 8 | Count | 1 | Number of entries.
+[Multi switch short entry](#multi_switch_short_entry_packet) [] | List | N | A list of switch commands.
+
+
+<a name="multi_switch_short_entry_packet"></a>
+##### Multi switch short entry
+
+Type | Name | Length | Description
+--- | --- | --- | ---
+uint 8 | Crownstone ID | 1 | The identifier of the crownstone to which this item is targeted.
+uint 8 | Switch state | 1 | The switch state to be set by the targeted crownstone. 0 = off, 100 = fully on.
+
+
+
+
+## Background advertisements
+These are meant to be broadcasted by phones all the time.
+
+<a name="background_advertisement"></a>
+#### Background advertisement
+
+Type | Name | Length | Description
+--- | --- | --- | ---
+uint8 | AD Length | 1 | Length of the next AD structure.
+uint8 | AD Type | 1 | 0xFF: Manufacturer specific data.
+uint8 | Company id | 2 | 0x004C: Apple.
+uint8 | type | 1 | 0x01: Services bitmask.
+uint8 [] | Services bitmask | 16 | Consists of 3x the same [data](#background_adv_data) plus 2 unused bits.
+
+
+<a name="background_adv_data"></a>
+#### Background advertisement data
+
+Type | Name | Length in bits | Description
+--- | --- | --- | ---
+uint8 | Protocol | 2 | Protocol version.
+uint8 | Sphere ID | 8 | Hash of the sphere ID, acts as filter, so that not every advertisement has to be decrypted.
+uint16 [] | Payload | 32 | Encrypted payload, using 32b RC5 with 128b guest key.
+
+
+<a name="background_adv_payload"></a>
+#### Background advertisement payload
+
+Type | Name | Length in bits | Description
+--- | --- | --- | ---
+uint16 | Validation | 16 | Validation: current local time as unix timestamp, right shifted by 7.
+uint8 | Location ID | 6 | ID of the location where the user is.
+uint8 | Profile ID | 3 | ID of the profile the user is using.
+int8 | RSSI offset | 4 | Offset from standard RSSI divided by 4.
+uint8 | flags | 3 | [Flags](#background_adv_flags).
+
+<a name="background_adv_flags"></a>
+#### Background advertisement flags
+
+Bit | Name |  Description
+--- | --- | ---
+0 | Tap to toggle | Set to 1 when this phone has tap to toggle enabled.
+1 |  | 
+2 |  | 
+
+
+
 
 
 
