@@ -201,16 +201,25 @@ void CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 }
 
 void CommandAdvertisementHandler::handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]) {
+	LOGd("encrypted RC5=[%u %u]", encryptedPayload[0], encryptedPayload[1]);
+	// TODO: can decrypt to same buffer?
+	uint16_t decryptedPayload[2];
+	EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(uint16_t) * 2, decryptedPayload, sizeof(decryptedPayload)); // Can't use sizeof(encryptedPayload) as that returns size of pointer.
+	LOGd("decrypted RC5=[%u %u]", decryptedPayload[0], decryptedPayload[1]);
+
+	// TODO: overwrite the first byte of the payload, so that it contains the timestamp?
+
 	evt_adv_background_t backgroundAdv;
 	switch (header.protocol) {
 	case 1:
 		backgroundAdv.protocol = 1;
 	}
 	backgroundAdv.sphereId = header.sphereId;
-	backgroundAdv.data = (uint8_t*)(&encryptedPayload);
-	backgroundAdv.dataSize = sizeof(uint16_t) * 2; // Can't use sizeof(encryptedPayload) as that returns size of pointer.
+	backgroundAdv.data = (uint8_t*)(decryptedPayload);
+	backgroundAdv.dataSize = sizeof(decryptedPayload);
 	backgroundAdv.macAddress = advReport->peer_addr.addr;
 	backgroundAdv.rssi = advReport->rssi;
+
 	EventDispatcher::getInstance().dispatch(EVT_ADV_BACKGROUND, &backgroundAdv, sizeof(backgroundAdv));
 }
 

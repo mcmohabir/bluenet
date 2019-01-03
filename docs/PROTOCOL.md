@@ -318,7 +318,7 @@ Type | Name | Length in bits | Description
 uint16 | Validation | 16 | Validation: current local time as unix timestamp, right shifted by 7.
 uint8 | Location ID | 6 | ID of the location where the user is.
 uint8 | Profile ID | 3 | ID of the profile the user is using.
-int8 | RSSI offset | 4 | Offset from standard RSSI divided by 4.
+uint8 | RSSI offset | 4 | Offset from standard signal strength. Divide by 4, then add 8.
 uint8 | flags | 3 | [Flags](#background_adv_flags).
 
 <a name="background_adv_flags"></a>
