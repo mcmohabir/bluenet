@@ -646,9 +646,10 @@ void Crownstone::startUp() {
 		_scheduler->start();
 
 		if (_settings->isSet(CONFIG_SCANNER_ENABLED)) {
-			RNG rng;
-			uint16_t delay = rng.getRandom16() / 6; // Delay in ms (about 0-10 seconds)
-			_scanner->delayedStart(delay);
+//			RNG rng;
+//			uint16_t delay = rng.getRandom16() / 6; // Delay in ms (about 0-10 seconds)
+//			_scanner->delayedStart(delay);
+			_scanner->start();
 			CommandAdvertisementHandler::getInstance();
 			BackgroundAdvertisementHandler::getInstance();
 			TapToToggle::getInstance();
