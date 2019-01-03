@@ -183,7 +183,10 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	LOGd("time=%u validation=%u type=%u length=%u data:", timestamp, validationTimestamp, type, length);
 	BLEutil::printArray(commandData, length);
 
-	// TODO: validate.
+	// TODO: validate with time.
+	if (validationTimestamp != 0xCAFEBABE) {
+		return false;
+	}
 
 	if (validationTimestamp < lastTimestamp) {
 		// Ignore this command, a newer command has been received.

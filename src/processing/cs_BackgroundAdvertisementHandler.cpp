@@ -114,8 +114,8 @@ void BackgroundAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t
 	LOGd("validation=%u time=%u %u", decryptedPayload[0], timestamp, timestampRounded);
 #endif
 
-	// TODO: validation
-	if (decryptedPayload[0] != 23445){
+	// TODO: validate with time
+	if (decryptedPayload[0] != 0xCAFE){
 		return;
 	}
 
