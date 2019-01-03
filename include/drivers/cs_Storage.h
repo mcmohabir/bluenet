@@ -248,6 +248,7 @@ struct ps_configuration_t : ps_storage_base_t {
 	uint32_t t2tScoreIncrement;
 	uint32_t t2tScoreThreshold;
 	uint32_t t2tScoreMax;
+	uint32_t t2tTimeoutTicks;
 
 };
 

@@ -159,6 +159,7 @@ ERR_CODE Settings::verify(uint8_t type, uint8_t* payload, uint8_t length) {
 	case CONFIG_T2T_SCORE_INCREMENT:
 	case CONFIG_T2T_SCORE_THRESHOLD:
 	case CONFIG_T2T_SCORE_MAX:
+	case CONFIG_T2T_TIMEOUT_TICKS:
 	{
 		if (length != 1) {
 			LOGw(FMT_ERR_EXPECTED, "uint8");
@@ -336,6 +337,7 @@ uint16_t Settings::getSettingsItemSize(uint8_t type) {
 	case CONFIG_T2T_SCORE_INCREMENT:
 	case CONFIG_T2T_SCORE_THRESHOLD:
 	case CONFIG_T2T_SCORE_MAX:
+	case CONFIG_T2T_TIMEOUT_TICKS:
 	{
 		return 1;
 	}
@@ -662,6 +664,10 @@ ERR_CODE Settings::get(uint8_t type, void* target, uint16_t& size, bool getDefau
 		StorageHelper::getUint8(_storageStruct.t2tScoreMax, (uint8_t*)target, *((uint8_t*)target), getDefaultValue);
 		break;
 	}
+	case CONFIG_T2T_TIMEOUT_TICKS: {
+		StorageHelper::getUint8(_storageStruct.t2tTimeoutTicks, (uint8_t*)target, *((uint8_t*)target), getDefaultValue);
+		break;
+	}
 	default: {
 		LOGw(FMT_CONFIGURATION_NOT_FOUND, type);
 		return ERR_UNKNOWN_TYPE;
@@ -925,6 +931,11 @@ ERR_CODE Settings::set(uint8_t type, void* target, bool persistent, uint16_t siz
 	case CONFIG_T2T_SCORE_MAX: {
 		p_item = (uint8_t*)&_storageStruct.t2tScoreMax;
 		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.t2tScoreMax);
+		break;
+	}
+	case CONFIG_T2T_TIMEOUT_TICKS: {
+		p_item = (uint8_t*)&_storageStruct.t2tTimeoutTicks;
+		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.t2tTimeoutTicks);
 		break;
 	}
 	default: {

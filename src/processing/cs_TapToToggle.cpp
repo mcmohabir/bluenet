@@ -17,6 +17,7 @@ TapToToggle::TapToToggle() {
 	Settings::getInstance().get(CONFIG_T2T_SCORE_INCREMENT, &scoreIncrement, false);
 	Settings::getInstance().get(CONFIG_T2T_SCORE_THRESHOLD, &scoreThreshold, false);
 	Settings::getInstance().get(CONFIG_T2T_SCORE_MAX, &scoreMax, false);
+	Settings::getInstance().get(CONFIG_T2T_TIMEOUT_TICKS, &timeoutTicks, false);
 	EventDispatcher::getInstance().addListener(this);
 }
 
@@ -69,7 +70,7 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		LOGw("-------");
 		LOGw("TRIGGER");
 		LOGw("-------");
-		timeoutCounter = 4; // 4 ticks, so 1.5 - 2s
+		timeoutCounter = timeoutTicks;
 		EventDispatcher::getInstance().dispatch(EVT_POWER_TOGGLE);
 	}
 }
