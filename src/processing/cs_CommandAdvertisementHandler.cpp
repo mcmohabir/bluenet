@@ -13,6 +13,7 @@
 #include "events/cs_EventTypes.h"
 #include "processing/cs_EncryptionHandler.h"
 #include "processing/cs_CommandHandler.h"
+#include "storage/cs_State.h"
 
 CommandAdvertisementHandler::CommandAdvertisementHandler() {
 	EventDispatcher::getInstance().addListener(this);
@@ -71,7 +72,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
 		uint16_t serviceUuid = ((uint16_t*)services16bit.data)[i];
 		LOGd("uuid=%u", serviceUuid);
-		uint8_t sequence = (serviceUuid >> 14) & 0x0003;
+		uint8_t sequence = (serviceUuid >> (16-2)) & 0x0003;
 		foundSequences[sequence] = true;
 		switch (sequence) {
 		case 0:
@@ -83,18 +84,18 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 			break;
 		case 1:
 //			header.sequence1 = sequence;
-			encryptedPayloadRC5[0] = ((serviceUuid >> 0) & 0x0F) << (16-4);   // Last 4 bits of this service UUID are first 4 bits of encrypted payload[0].
+			encryptedPayloadRC5[0] = ((serviceUuid >> (16-2-10-4)) & 0x0F) << (16-4);   // Last 4 bits of this service UUID are first 4 bits of encrypted payload[0].
 			memcpy(nonce+2, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 2:
 //			header.sequence2 = sequence;
-			encryptedPayloadRC5[0] = ((serviceUuid >> (16-2)) & 0x0FFF) << 0; // Bits 2 - 13 of this service UUID are last 12 bits of encrypted payload[0].
-			encryptedPayloadRC5[1] = ((serviceUuid >> 0) & 0x03) << (16-2);   // Last 2 bits of this service UUID are first 2 bits of encrypted payload[1].
+			encryptedPayloadRC5[0] += ((serviceUuid >> (16-2-12)) & 0x0FFF) << (16-4-12); // Bits 2 - 13 of this service UUID are last 12 bits of encrypted payload[0].
+			encryptedPayloadRC5[1] = ((serviceUuid >> (16-2-12-2)) & 0x03) << (16-2);   // Last 2 bits of this service UUID are first 2 bits of encrypted payload[1].
 			memcpy(nonce+4, &serviceUuid, sizeof(uint16_t));
 			break;
 		case 3:
 //			header.sequence3 = sequence;
-			encryptedPayloadRC5[1] = ((serviceUuid >> 0) & 0x3FFF) << 0;      // Last 14 bits of this service UUID are last 14 bits of encrypted payload[1].
+			encryptedPayloadRC5[1] += ((serviceUuid >> (16-2-14)) & 0x3FFF) << (16-2-14);      // Last 14 bits of this service UUID are last 14 bits of encrypted payload[1].
 			memcpy(nonce+6, &serviceUuid, sizeof(uint16_t));
 			break;
 		}
@@ -126,19 +127,21 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 //	logSerial(SERIAL_DEBUG, "nonce: ");
 //	BLEutil::printArray(nonce, sizeof(nonce));
 
-	handleEncryptedRC5Payload(advReport, header, encryptedPayloadRC5);
-
 	data_t nonceData;
 	nonceData.data = nonce;
 	nonceData.len = sizeof(nonce);
-	handleEncryptedCommandPayload(header, nonceData, services128bit);
+	bool validated = handleEncryptedCommandPayload(header, nonceData, services128bit);
+	if (validated) {
+		handleEncryptedRC5Payload(advReport, header, encryptedPayloadRC5);
+	}
 }
 
-void CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
+// Return true when validated command payload.
+bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
 	uint32_t errCode;
 	if (memcmp(encryptedPayload.data, &lastVerifiedData, sizeof(lastVerifiedData)) == 0) {
 		// Ignore this command, as it has already been handled.
-		return;
+		return true; // TODO: should be false, but that means we don't get any background advertisement payloads when command advertisement remains unchanged.
 	}
 
 	EncryptionAccessLevel accessLevel;
@@ -160,28 +163,36 @@ void CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 		break;
 	}
 	if (accessLevel == NOT_SET) {
-		return;
+		return false;
 	}
 
 	// TODO: can decrypt to same buffer?
 	uint8_t decryptedData[16];
 	if (!EncryptionHandler::getInstance().decryptBlockCTR(encryptedPayload.data, encryptedPayload.len, decryptedData, 16, accessLevel, nonce.data, nonce.len)) {
-		return;
+		return false;
 	}
 	logSerial(SERIAL_DEBUG, "decrypted data: ");
 	BLEutil::printArray(decryptedData, 16);
 
-	uint32_t validation = *((uint32_t*)decryptedData);
+	uint32_t validationTimestamp = *((uint32_t*)decryptedData);
+	uint32_t timestamp;
+	State::getInstance().get(STATE_TIME, timestamp);
 	uint8_t type = decryptedData[4];
 	uint16_t length = 16 - 5;
 	uint8_t* commandData = decryptedData + 5;
-	LOGd("validation=%u type=%u length=%u data:", validation, type, length);
+	LOGd("time=%u validation=%u type=%u length=%u data:", timestamp, validationTimestamp, type, length);
 	BLEutil::printArray(commandData, length);
 
 	// TODO: validate.
 
+	if (validationTimestamp < lastTimestamp) {
+		// Ignore this command, a newer command has been received.
+		return true;
+	}
+
 	// After validation, remember the last verified data.
 	memcpy(&lastVerifiedData, encryptedPayload.data, sizeof(lastVerifiedData));
+	lastTimestamp = validationTimestamp;
 
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
 	switch (type) {
@@ -191,13 +202,20 @@ void CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	}
 
 	if (commandType == CMD_UNKNOWN) {
-		return;
+		return true;
+	}
+
+	// Temporary solution: make sure switch is only done once per second
+	if (lastSwitchTime > timestamp - 1) {
+		return true;
 	}
 
 	errCode = CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
 	if (errCode != ERR_SUCCESS) {
-		return;
+		return true;
 	}
+	lastSwitchTime = timestamp;
+	return true;
 }
 
 void CommandAdvertisementHandler::handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]) {

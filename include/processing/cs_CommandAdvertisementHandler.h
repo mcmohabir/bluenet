@@ -41,10 +41,13 @@ public:
 
 private:
 	CommandAdvertisementHandler();
-	uint32_t lastVerifiedData; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
+	uint32_t lastVerifiedData = 0; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
+	uint32_t lastTimestamp = 0; // Decrypted timestamp of last command
+	uint32_t lastSwitchTime = 0; // Temporary solution: timestamp of last switch, so we can't switch too quickly after eachother.
 
 	void parseAdvertisement(ble_gap_evt_adv_report_t* advReport);
-	void handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload);
+	// Return true when validated command payload.
+	bool handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload);
 	void handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]);
 };
 
