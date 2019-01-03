@@ -52,6 +52,7 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		list[index].score = 0;
 	}
 
+	// By placing this check here, the score will drop, which will make it more likely to trigger again when phone is kept close.
 	if (timeoutCounter != 0) {
 		LOGi("wait with t2t");
 		return;
@@ -68,7 +69,7 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		LOGw("-------");
 		LOGw("TRIGGER");
 		LOGw("-------");
-		timeoutCounter = 2; // 1s
+		timeoutCounter = 4; // 4 ticks, so 1.5 - 2s
 		EventDispatcher::getInstance().dispatch(EVT_POWER_TOGGLE);
 	}
 }
