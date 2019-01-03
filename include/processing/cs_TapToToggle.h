@@ -27,9 +27,9 @@ public:
 private:
 	t2t_entry_t list[T2T_LIST_COUNT];
 	int8_t rssiThreshold = -50;
-	uint8_t scoreIncrement = 2; // Score is increased with this value when rssi is above rssi threshold.
-	uint8_t scoreThreshold = 2; // Threshold above which the toggle is triggered.
-	uint8_t scoreMax = 4;       // Score can't be higher than this value.
+	uint8_t scoreIncrement = 4; // Score is increased with this value when rssi is above rssi threshold.
+	uint8_t scoreThreshold = 6; // Threshold above which the toggle is triggered.
+	uint8_t scoreMax = 10;       // Score can't be higher than this value.
 	TapToToggle();
 	void handleBackgroundAdvertisement(evt_adv_background_t* adv);
 	void tick();

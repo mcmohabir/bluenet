@@ -9,6 +9,8 @@
 #include "events/cs_EventDispatcher.h"
 #include "drivers/cs_RTC.h"
 #include "drivers/cs_Serial.h"
+#include "processing/cs_CommandHandler.h"
+#include "util/cs_Utils.h"
 
 TapToToggle::TapToToggle() {
 	EventDispatcher::getInstance().addListener(this);
@@ -18,6 +20,13 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 	if (adv->rssi < rssiThreshold) {
 		return;
 	}
+	if (adv->dataSize != sizeof(evt_adv_background_payload_t)) {
+		return;
+	}
+//	evt_adv_background_payload_t* payload = (evt_adv_background_payload_t*)(adv->data);
+//	if (!BLEutil::isBitSet(payload->flags, 0)) {
+//		return;
+//	}
 
 	// Use index of entry with matching address, or else with lowest score.
 	uint8_t index = -1; // Index to use
@@ -40,14 +49,17 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 	}
 
 	uint8_t prevScore = list[index].score;
-	list[index].score += 2;
+	list[index].score += scoreIncrement;
 	if (list[index].score > scoreMax) {
 		list[index].score = scoreMax;
 	}
 
-	LOGd("rssi=%u ind=%u prevScore=%u score=%u", adv->rssi, index, prevScore, list[index].score);
+	LOGd("rssi=%i ind=%u prevScore=%u score=%u", adv->rssi, index, prevScore, list[index].score);
 	if (prevScore <= scoreThreshold && list[index].score > scoreThreshold) {
-		LOGi("TRIGGER");
+		LOGw("-------");
+		LOGw("TRIGGER");
+		LOGw("-------");
+		EventDispatcher::getInstance().dispatch(EVT_POWER_TOGGLE);
 	}
 }
 
@@ -57,6 +69,7 @@ void TapToToggle::tick() {
 			list[i].score--;
 		}
 	}
+	LOGd("scores=%u %u %u", list[0].score, list[1].score, list[2].score)
 }
 
 void TapToToggle::handleEvent(uint16_t evt, void* data, uint16_t length) {
