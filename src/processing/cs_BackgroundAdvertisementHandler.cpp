@@ -17,7 +17,7 @@
 #include "processing/cs_CommandHandler.h"
 #include "storage/cs_State.h"
 
-#define BACKGROUND_ADV_VERBOSE
+//#define BACKGROUND_ADV_VERBOSE
 
 BackgroundAdvertisementHandler::BackgroundAdvertisementHandler() {
 	EventDispatcher::getInstance().addListener(this);
