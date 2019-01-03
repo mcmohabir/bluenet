@@ -244,6 +244,11 @@ struct ps_configuration_t : ps_storage_base_t {
 	// Indicating whether UART should be enabled (uint8 enum, see cs_Serial.h).
 	uint32_t uartEnabled;
 
+	// Temp variables..
+	uint32_t t2tScoreIncrement;
+	uint32_t t2tScoreThreshold;
+	uint32_t t2tScoreMax;
+
 };
 
 //! size of one block in eeprom can't be bigger than 1024 bytes. => create a new struct

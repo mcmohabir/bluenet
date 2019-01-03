@@ -155,7 +155,11 @@ ERR_CODE Settings::verify(uint8_t type, uint8_t* payload, uint8_t length) {
 	case CONFIG_SCAN_FILTER:
 	case CONFIG_FLOOR:
 	case CONFIG_MESH_CHANNEL:
-	case CONFIG_UART_ENABLED: {
+	case CONFIG_UART_ENABLED:
+	case CONFIG_T2T_SCORE_INCREMENT:
+	case CONFIG_T2T_SCORE_THRESHOLD:
+	case CONFIG_T2T_SCORE_MAX:
+	{
 		if (length != 1) {
 			LOGw(FMT_ERR_EXPECTED, "uint8");
 			return ERR_WRONG_PAYLOAD_LENGTH;
@@ -328,7 +332,11 @@ uint16_t Settings::getSettingsItemSize(uint8_t type) {
 	case CONFIG_SCAN_FILTER:
 	case CONFIG_FLOOR:
 	case CONFIG_MESH_CHANNEL:
-	case CONFIG_UART_ENABLED: {
+	case CONFIG_UART_ENABLED:
+	case CONFIG_T2T_SCORE_INCREMENT:
+	case CONFIG_T2T_SCORE_THRESHOLD:
+	case CONFIG_T2T_SCORE_MAX:
+	{
 		return 1;
 	}
 
@@ -642,6 +650,18 @@ ERR_CODE Settings::get(uint8_t type, void* target, uint16_t& size, bool getDefau
 		StorageHelper::getUint8(_storageStruct.uartEnabled, (uint8_t*)target, 0, getDefaultValue);
 		break;
 	}
+	case CONFIG_T2T_SCORE_INCREMENT: {
+		StorageHelper::getUint8(_storageStruct.t2tScoreIncrement, (uint8_t*)target, *((uint8_t*)target), getDefaultValue);
+		break;
+	}
+	case CONFIG_T2T_SCORE_THRESHOLD: {
+		StorageHelper::getUint8(_storageStruct.t2tScoreThreshold, (uint8_t*)target, *((uint8_t*)target), getDefaultValue);
+		break;
+	}
+	case CONFIG_T2T_SCORE_MAX: {
+		StorageHelper::getUint8(_storageStruct.t2tScoreMax, (uint8_t*)target, *((uint8_t*)target), getDefaultValue);
+		break;
+	}
 	default: {
 		LOGw(FMT_CONFIGURATION_NOT_FOUND, type);
 		return ERR_UNKNOWN_TYPE;
@@ -890,6 +910,21 @@ ERR_CODE Settings::set(uint8_t type, void* target, bool persistent, uint16_t siz
 	case CONFIG_UART_ENABLED: {
 		p_item = (uint8_t*)&_storageStruct.uartEnabled;
 		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.uartEnabled);
+		break;
+	}
+	case CONFIG_T2T_SCORE_INCREMENT: {
+		p_item = (uint8_t*)&_storageStruct.t2tScoreIncrement;
+		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.t2tScoreIncrement);
+		break;
+	}
+	case CONFIG_T2T_SCORE_THRESHOLD: {
+		p_item = (uint8_t*)&_storageStruct.t2tScoreThreshold;
+		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.t2tScoreThreshold);
+		break;
+	}
+	case CONFIG_T2T_SCORE_MAX: {
+		p_item = (uint8_t*)&_storageStruct.t2tScoreMax;
+		StorageHelper::setUint8(*((uint8_t*)target), _storageStruct.t2tScoreMax);
 		break;
 	}
 	default: {

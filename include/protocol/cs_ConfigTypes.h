@@ -74,5 +74,10 @@ enum ConfigurationTypes {
 	CONFIG_MESH_CHANNEL                     = 58,     //! 0x3A
 	CONFIG_UART_ENABLED                     = 59,     //! 0x3B
 
+	// Temporary configs
+	CONFIG_T2T_SCORE_INCREMENT = 60,
+	CONFIG_T2T_SCORE_THRESHOLD = 61,
+	CONFIG_T2T_SCORE_MAX = 62,
+
 	CONFIG_TYPES
 }; // Current max is 127 (0x7F), see cs_EventTypes.h

@@ -11,8 +11,12 @@
 #include "drivers/cs_Serial.h"
 #include "processing/cs_CommandHandler.h"
 #include "util/cs_Utils.h"
+#include "storage/cs_Settings.h"
 
 TapToToggle::TapToToggle() {
+	Settings::getInstance().get(CONFIG_T2T_SCORE_INCREMENT, &scoreIncrement, false);
+	Settings::getInstance().get(CONFIG_T2T_SCORE_THRESHOLD, &scoreThreshold, false);
+	Settings::getInstance().get(CONFIG_T2T_SCORE_MAX, &scoreMax, false);
 	EventDispatcher::getInstance().addListener(this);
 }
 
