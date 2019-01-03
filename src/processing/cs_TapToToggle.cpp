@@ -52,6 +52,11 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		list[index].score = 0;
 	}
 
+	if (timeoutCounter != 0) {
+		LOGi("wait with t2t");
+		return;
+	}
+
 	uint8_t prevScore = list[index].score;
 	list[index].score += scoreIncrement;
 	if (list[index].score > scoreMax) {
@@ -63,15 +68,19 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		LOGw("-------");
 		LOGw("TRIGGER");
 		LOGw("-------");
+		timeoutCounter = 2; // 1s
 		EventDispatcher::getInstance().dispatch(EVT_POWER_TOGGLE);
 	}
 }
 
 void TapToToggle::tick() {
 	for (uint8_t i=0; i<T2T_LIST_COUNT; ++i) {
-		if (list[i].score > 0) {
+		if (list[i].score) {
 			list[i].score--;
 		}
+	}
+	if (timeoutCounter) {
+		timeoutCounter--;
 	}
 	LOGd("scores=%u %u %u", list[0].score, list[1].score, list[2].score)
 }

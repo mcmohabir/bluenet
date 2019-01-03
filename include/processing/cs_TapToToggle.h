@@ -30,6 +30,7 @@ private:
 	uint8_t scoreIncrement = 4; // Score is increased with this value when rssi is above rssi threshold.
 	uint8_t scoreThreshold = 6; // Threshold above which the toggle is triggered.
 	uint8_t scoreMax = 10;       // Score can't be higher than this value.
+	uint8_t timeoutCounter = 0; // Used to make sure toggle doesn't happen too quickly after each other.
 	TapToToggle();
 	void handleBackgroundAdvertisement(evt_adv_background_t* adv);
 	void tick();
