@@ -188,14 +188,15 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 		return false;
 	}
 
-	if (validationTimestamp < lastTimestamp) {
-		// Ignore this command, a newer command has been received.
-		return true;
-	}
+	// Can't do this (yet?), because phones may have different times.
+//	if (validationTimestamp < lastTimestamp) {
+//		// Ignore this command, a newer command has been received.
+//		return true;
+//	}
 
 	// After validation, remember the last verified data.
 	memcpy(&lastVerifiedData, encryptedPayload.data, sizeof(lastVerifiedData));
-	lastTimestamp = validationTimestamp;
+//	lastTimestamp = validationTimestamp;
 
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
 	switch (type) {
