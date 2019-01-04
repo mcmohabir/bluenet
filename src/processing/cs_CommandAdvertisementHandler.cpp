@@ -208,8 +208,13 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 		return true;
 	}
 
-	// Temporary solution: make sure switch is only done once per second
-	if (lastSwitchTime > timestamp - 1) {
+//	// Temporary solution: make sure switch is only done once per second
+//	// This doesn't work when time is not set
+//	if (lastSwitchTime > timestamp - 1) {
+//		return true;
+//	}
+	// Temporary solution: making sure switch is only set once per second
+	if (timeoutCounter) {
 		return true;
 	}
 
@@ -217,7 +222,8 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	if (errCode != ERR_SUCCESS) {
 		return true;
 	}
-	lastSwitchTime = timestamp;
+//	lastSwitchTime = timestamp;
+	timeoutCounter = 3; // 3 ticks timeout, so 1 - 1.5s.
 	return true;
 }
 
@@ -249,6 +255,12 @@ void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t
 	case EVT_DEVICE_SCANNED: {
 		ble_gap_evt_adv_report_t* advReport = (ble_gap_evt_adv_report_t*)data;
 		parseAdvertisement(advReport);
+		break;
+	}
+	case EVT_TICK_500_MS: {
+		if (timeoutCounter) {
+			timeoutCounter--;
+		}
 		break;
 	}
 	}

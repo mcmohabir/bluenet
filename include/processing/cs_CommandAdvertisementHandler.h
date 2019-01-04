@@ -43,7 +43,8 @@ private:
 	CommandAdvertisementHandler();
 	uint32_t lastVerifiedData = 0; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
 	uint32_t lastTimestamp = 0; // Decrypted timestamp of last command
-	uint32_t lastSwitchTime = 0; // Temporary solution: timestamp of last switch, so we can't switch too quickly after eachother.
+//	uint32_t lastSwitchTime = 0; // Temporary solution: timestamp of last switch, so we can't switch too quickly after eachother.
+	uint8_t timeoutCounter = 0;
 
 	void parseAdvertisement(ble_gap_evt_adv_report_t* advReport);
 	// Return true when validated command payload.
