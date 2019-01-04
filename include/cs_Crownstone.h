@@ -147,7 +147,7 @@ private:
 	TemperatureGuard* _temperatureGuard;
 	PowerSampling* _powerSampler;
 	Watchdog* _watchdog;
-	EnOceanHandler* _enOceanHandler;
+//	EnOceanHandler* _enOceanHandler;
 
 	// services
 	DeviceInformationService* _deviceInformationService;

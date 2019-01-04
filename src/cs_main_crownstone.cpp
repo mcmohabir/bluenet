@@ -61,7 +61,8 @@ void handleZeroCrossing() {
 
 Crownstone::Crownstone(boards_config_t& board) :
 	_boardsConfig(board),
-	_switch(NULL), _temperatureGuard(NULL), _powerSampler(NULL), _watchdog(NULL), _enOceanHandler(NULL),
+	_switch(NULL), _temperatureGuard(NULL), _powerSampler(NULL), _watchdog(NULL),
+//	_enOceanHandler(NULL),
 	_deviceInformationService(NULL), _crownstoneService(NULL), _setupService(NULL),
 	_generalService(NULL), _localizationService(NULL), _powerService(NULL),
 	_scheduleService(NULL),
@@ -119,7 +120,7 @@ Crownstone::Crownstone(boards_config_t& board) :
 
 		_watchdog = &Watchdog::getInstance();
 
-		_enOceanHandler = &EnOceanHandler::getInstance();
+//		_enOceanHandler = &EnOceanHandler::getInstance();
 	}
 
 };
@@ -307,7 +308,7 @@ void Crownstone::initDrivers() {
 		LOGi(FMT_INIT, "watchdog");
 		_watchdog->init();
 
-		_enOceanHandler->init();
+//		_enOceanHandler->init();
 	}
 
 	// init GPIOs
