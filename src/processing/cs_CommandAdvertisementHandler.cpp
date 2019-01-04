@@ -139,7 +139,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 // Return true when validated command payload.
 bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
 	uint32_t errCode;
-	if (memcmp(encryptedPayload.data, &lastVerifiedData, sizeof(lastVerifiedData)) == 0) {
+	if (memcmp(encryptedPayload.data + 4, &lastVerifiedData, sizeof(lastVerifiedData)) == 0) {
 		// Ignore this command, as it has already been handled.
 		return true; // TODO: should be false, but that means we don't get any background advertisement payloads when command advertisement remains unchanged.
 	}
@@ -195,7 +195,9 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 //	}
 
 	// After validation, remember the last verified data.
-	memcpy(&lastVerifiedData, encryptedPayload.data, sizeof(lastVerifiedData));
+	// TODO: this doesn't check the whole encrypted payload, while changing the Nth byte in the decrypted payload, only changes the Nth byte in the encrypted payload.
+	// For now: check byte 4-7: the bytes that will change.
+	memcpy(&lastVerifiedData, encryptedPayload.data + 4, sizeof(lastVerifiedData));
 //	lastTimestamp = validationTimestamp;
 
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
