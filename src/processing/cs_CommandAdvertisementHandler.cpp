@@ -18,13 +18,12 @@
 //#define COMMAND_ADV_VERBOSE
 
 CommandAdvertisementHandler::CommandAdvertisementHandler():
-instance(NULL),
 lastVerifiedEncryptedData(0),
 timeoutCounter(0)
 {
 	LOGd("constructor");
 	EventDispatcher::getInstance().addListener(this);
-//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, instance, this->timeoutCounter, &this->timeoutCounter);
+//	LOGd("this=%p timeoutCounter=%u %p", this, timeoutCounter, &timeoutCounter);
 }
 
 void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* advReport) {
@@ -147,7 +146,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	nonceData.data = nonce;
 	nonceData.len = sizeof(nonce);
 	bool validated = handleEncryptedCommandPayload(advReport, header, nonceData, services128bit);
-//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
+//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, &(CommandAdvertisementHandler::getInstance()), timeoutCounter, &timeoutCounter);
 	if (validated) {
 		handleEncryptedRC5Payload(advReport, header, encryptedPayloadRC5);
 	}
@@ -208,16 +207,16 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(ble_gap_evt_adv_
 		return false;
 	}
 
-	LOGd("timeoutCounter=%u time=%u validation=%u type=%u length=%u data:", this->timeoutCounter, timestamp, validationTimestamp, type, length);
+	LOGd("timeoutCounter=%u time=%u validation=%u type=%u length=%u data:", timeoutCounter, timestamp, validationTimestamp, type, length);
 	BLEutil::printArray(commandData, length);
 
 	// Let a phone claim the advertisement commands.
 	// Do this after validation, so that validation can still take place.
-	if (this->timeoutCounter) {
+	if (timeoutCounter) {
 		LOGd("timeout: memcmp=%i address=", memcmp(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN));
 		BLEutil::printAddress(advReport->peer_addr.addr, BLE_GAP_ADDR_LEN);
 	}
-	if ((this->timeoutCounter) && (memcmp(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN) != 0)) {
+	if ((timeoutCounter) && (memcmp(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN) != 0)) {
 		return true;
 	}
 
@@ -246,15 +245,15 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(ble_gap_evt_adv_
 
 	// TODO: for some reason, "this" changes after the call to CommandHandler::getInstance().handleCommand(). This is why we set timeoutCounter before the command handler.
 
-//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
+//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, &(CommandAdvertisementHandler::getInstance()), timeoutCounter, &timeoutCounter);
 	timeoutCounter = 3; // 3 ticks timeout, so 1 - 1.5s.
 	memcpy(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN);
-//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
+//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, &(CommandAdvertisementHandler::getInstance()), timeoutCounter, &timeoutCounter);
 	errCode = CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
 	if (errCode != ERR_SUCCESS) {
 		return true;
 	}
-//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
+//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, &(CommandAdvertisementHandler::getInstance()), timeoutCounter, &timeoutCounter);
 	return true;
 }
 
@@ -292,13 +291,13 @@ void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t
 	switch(evt) {
 	case EVT_DEVICE_SCANNED: {
 		ble_gap_evt_adv_report_t* advReport = (ble_gap_evt_adv_report_t*)data;
-		this->parseAdvertisement(advReport);
+		parseAdvertisement(advReport);
 		break;
 	}
 	case EVT_TICK_500_MS: {
-		if (this->timeoutCounter) {
-			this->timeoutCounter--;
-			LOGd("timeoutCounter=%u", this->timeoutCounter);
+		if (timeoutCounter) {
+			timeoutCounter--;
+			LOGd("timeoutCounter=%u", timeoutCounter);
 		}
 		break;
 	}

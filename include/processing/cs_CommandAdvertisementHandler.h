@@ -34,7 +34,6 @@ class CommandAdvertisementHandler : public EventListener {
 public:
 	static CommandAdvertisementHandler& getInstance() {
 		static CommandAdvertisementHandler staticInstance;
-		staticInstance.instance = &staticInstance;
 		return staticInstance;
 	}
 	void handleEvent(uint16_t evt, void* data, uint16_t length);
@@ -42,7 +41,6 @@ public:
 
 private:
 	CommandAdvertisementHandler();
-	CommandAdvertisementHandler* instance;
 	uint32_t lastVerifiedEncryptedData; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
 //	uint32_t lastTimestamp = 0; // Decrypted timestamp of last command
 	uint8_t timeoutCounter;
