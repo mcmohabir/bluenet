@@ -17,8 +17,14 @@
 
 //#define COMMAND_ADV_VERBOSE
 
-CommandAdvertisementHandler::CommandAdvertisementHandler() {
+CommandAdvertisementHandler::CommandAdvertisementHandler():
+instance(NULL),
+lastVerifiedEncryptedData(0),
+timeoutCounter(0)
+{
+	LOGd("constructor");
 	EventDispatcher::getInstance().addListener(this);
+//	LOGd("this=%p instance=%p timeoutCounter=%u %p", this, instance, this->timeoutCounter, &this->timeoutCounter);
 }
 
 void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* advReport) {
@@ -131,7 +137,8 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 //				);
 //	}
 //	_logSerial(SERIAL_DEBUG, SERIAL_CRLF);
-	LOGd("protocol=%u sphereId=%u accessLevel=%u", header.protocol, header.sphereId, header.accessLevel);
+	LOGd("protocol=%u sphereId=%u accessLevel=%u address=", header.protocol, header.sphereId, header.accessLevel);
+	BLEutil::printAddress(advReport->peer_addr.addr, BLE_GAP_ADDR_LEN);
 //	logSerial(SERIAL_DEBUG, "nonce: ");
 //	BLEutil::printArray(nonce, sizeof(nonce));
 #endif
@@ -139,17 +146,21 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	data_t nonceData;
 	nonceData.data = nonce;
 	nonceData.len = sizeof(nonce);
-	bool validated = handleEncryptedCommandPayload(header, nonceData, services128bit);
+	bool validated = handleEncryptedCommandPayload(advReport, header, nonceData, services128bit);
+//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
 	if (validated) {
 		handleEncryptedRC5Payload(advReport, header, encryptedPayloadRC5);
 	}
 }
 
 // Return true when validated command payload.
-bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
+bool CommandAdvertisementHandler::handleEncryptedCommandPayload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload) {
 	uint32_t errCode;
-	if (memcmp(encryptedPayload.data + 4, &lastVerifiedData, sizeof(lastVerifiedData)) == 0) {
+	if (memcmp(&lastVerifiedEncryptedData, encryptedPayload.data + 4, sizeof(lastVerifiedEncryptedData)) == 0) {
 		// Ignore this command, as it has already been handled.
+#ifdef COMMAND_ADV_VERBOSE
+		LOGd("Ignore similar payload");
+#endif
 		return true; // TODO: should be false, but that means we don't get any background advertisement payloads when command advertisement remains unchanged.
 	}
 
@@ -191,12 +202,23 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	uint8_t type = decryptedData[4];
 	uint16_t length = 16 - 5;
 	uint8_t* commandData = decryptedData + 5;
-	LOGd("time=%u validation=%u type=%u length=%u data:", timestamp, validationTimestamp, type, length);
-	BLEutil::printArray(commandData, length);
 
 	// TODO: validate with time.
 	if (validationTimestamp != 0xCAFEBABE) {
 		return false;
+	}
+
+	LOGd("timeoutCounter=%u time=%u validation=%u type=%u length=%u data:", this->timeoutCounter, timestamp, validationTimestamp, type, length);
+	BLEutil::printArray(commandData, length);
+
+	// Let a phone claim the advertisement commands.
+	// Do this after validation, so that validation can still take place.
+	if (this->timeoutCounter) {
+		LOGd("timeout: memcmp=%i address=", memcmp(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN));
+		BLEutil::printAddress(advReport->peer_addr.addr, BLE_GAP_ADDR_LEN);
+	}
+	if ((this->timeoutCounter) && (memcmp(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN) != 0)) {
+		return true;
 	}
 
 	// Can't do this (yet?), because phones may have different times.
@@ -208,7 +230,7 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	// After validation, remember the last verified data.
 	// TODO: this doesn't check the whole encrypted payload, while changing the Nth byte in the decrypted payload, only changes the Nth byte in the encrypted payload.
 	// For now: check byte 4-7: the bytes that will change.
-	memcpy(&lastVerifiedData, encryptedPayload.data + 4, sizeof(lastVerifiedData));
+	memcpy(&lastVerifiedEncryptedData, encryptedPayload.data + 4, sizeof(lastVerifiedEncryptedData));
 //	lastTimestamp = validationTimestamp;
 
 	CommandHandlerTypes commandType = CMD_UNKNOWN;
@@ -222,22 +244,17 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 		return true;
 	}
 
-//	// Temporary solution: make sure switch is only done once per second
-//	// This doesn't work when time is not set
-//	if (lastSwitchTime > timestamp - 1) {
-//		return true;
-//	}
-	// Temporary solution: making sure switch is only set once per second
-	if (timeoutCounter) {
-		return true;
-	}
+	// TODO: for some reason, "this" changes after the call to CommandHandler::getInstance().handleCommand(). This is why we set timeoutCounter before the command handler.
 
+//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
+	timeoutCounter = 3; // 3 ticks timeout, so 1 - 1.5s.
+	memcpy(timeoutAddress, advReport->peer_addr.addr, BLE_GAP_ADDR_LEN);
+//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
 	errCode = CommandHandler::getInstance().handleCommand(commandType, commandData, length, accessLevel);
 	if (errCode != ERR_SUCCESS) {
 		return true;
 	}
-//	lastSwitchTime = timestamp;
-	timeoutCounter = 3; // 3 ticks timeout, so 1 - 1.5s.
+//	LOGd("this=%p instance=%p %p timeoutCounter=%u %p", this, instance, &(CommandAdvertisementHandler::getInstance()), this->timeoutCounter, &this->timeoutCounter);
 	return true;
 }
 
@@ -275,12 +292,13 @@ void CommandAdvertisementHandler::handleEvent(uint16_t evt, void* data, uint16_t
 	switch(evt) {
 	case EVT_DEVICE_SCANNED: {
 		ble_gap_evt_adv_report_t* advReport = (ble_gap_evt_adv_report_t*)data;
-		parseAdvertisement(advReport);
+		this->parseAdvertisement(advReport);
 		break;
 	}
 	case EVT_TICK_500_MS: {
-		if (timeoutCounter) {
-			timeoutCounter--;
+		if (this->timeoutCounter) {
+			this->timeoutCounter--;
+			LOGd("timeoutCounter=%u", this->timeoutCounter);
 		}
 		break;
 	}

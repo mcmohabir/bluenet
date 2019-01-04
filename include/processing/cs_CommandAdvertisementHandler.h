@@ -33,22 +33,24 @@ struct __attribute__((__packed__)) CommandAdvertisementHeader {
 class CommandAdvertisementHandler : public EventListener {
 public:
 	static CommandAdvertisementHandler& getInstance() {
-		static CommandAdvertisementHandler instance;
-		return instance;
+		static CommandAdvertisementHandler staticInstance;
+		staticInstance.instance = &staticInstance;
+		return staticInstance;
 	}
 	void handleEvent(uint16_t evt, void* data, uint16_t length);
 
 
 private:
 	CommandAdvertisementHandler();
-	uint32_t lastVerifiedData = 0; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
+	CommandAdvertisementHandler* instance;
+	uint32_t lastVerifiedEncryptedData; // Part of the encrypted data of last verified command advertisement. Used to prevent double handling of command advertisements.
 //	uint32_t lastTimestamp = 0; // Decrypted timestamp of last command
-//	uint32_t lastSwitchTime = 0; // Temporary solution: timestamp of last switch, so we can't switch too quickly after eachother.
-	uint8_t timeoutCounter = 0;
+	uint8_t timeoutCounter;
+	uint8_t timeoutAddress[BLE_GAP_ADDR_LEN];
 
 	void parseAdvertisement(ble_gap_evt_adv_report_t* advReport);
 	// Return true when validated command payload.
-	bool handleEncryptedCommandPayload(const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload);
+	bool handleEncryptedCommandPayload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, const data_t& nonce, data_t& encryptedPayload);
 	void handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]);
 };
 
