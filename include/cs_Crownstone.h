@@ -38,6 +38,9 @@
 #include <processing/cs_PowerSampling.h>
 #include <processing/cs_Watchdog.h>
 #include <processing/cs_EnOceanHandler.h>
+#include "processing/cs_CommandAdvertisementHandler.h"
+#include "processing/cs_BackgroundAdvertisementHandler.h"
+#include "processing/cs_TapToToggle.h"
 
 #if BUILD_MESHING == 1
 #include <mesh/cs_Mesh.h>
@@ -148,6 +151,9 @@ private:
 	PowerSampling* _powerSampler;
 	Watchdog* _watchdog;
 //	EnOceanHandler* _enOceanHandler;
+	CommandAdvertisementHandler* _commandAdvertisementHandler;
+	BackgroundAdvertisementHandler* _backgroundAdvertisementHandler;
+	TapToToggle* _tapToToggle;
 
 	// services
 	DeviceInformationService* _deviceInformationService;

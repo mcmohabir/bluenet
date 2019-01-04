@@ -36,9 +36,7 @@
 #include "structs/buffer/cs_EncryptionBuffer.h"
 #include "util/cs_Utils.h"
 #include "protocol/cs_UartProtocol.h"
-#include "processing/cs_CommandAdvertisementHandler.h"
-#include "processing/cs_BackgroundAdvertisementHandler.h"
-#include "processing/cs_TapToToggle.h"
+
 
 extern "C" {
 #include <nrf_nvmc.h>
@@ -63,6 +61,7 @@ Crownstone::Crownstone(boards_config_t& board) :
 	_boardsConfig(board),
 	_switch(NULL), _temperatureGuard(NULL), _powerSampler(NULL), _watchdog(NULL),
 //	_enOceanHandler(NULL),
+	_commandAdvertisementHandler(NULL), _backgroundAdvertisementHandler(NULL), _tapToToggle(NULL),
 	_deviceInformationService(NULL), _crownstoneService(NULL), _setupService(NULL),
 	_generalService(NULL), _localizationService(NULL), _powerService(NULL),
 	_scheduleService(NULL),
@@ -651,9 +650,10 @@ void Crownstone::startUp() {
 //			uint16_t delay = rng.getRandom16() / 6; // Delay in ms (about 0-10 seconds)
 //			_scanner->delayedStart(delay);
 			_scanner->start();
-			CommandAdvertisementHandler::getInstance();
-			BackgroundAdvertisementHandler::getInstance();
-			TapToToggle::getInstance();
+			_commandAdvertisementHandler = &CommandAdvertisementHandler::getInstance();
+			_backgroundAdvertisementHandler = &BackgroundAdvertisementHandler::getInstance();
+			_tapToToggle = &TapToToggle::getInstance();
+
 			EncryptionHandler::getInstance().RC5InitKey(GUEST); // BackgroundAdvertisementHandler needs RC5.
 		}
 
