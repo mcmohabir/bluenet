@@ -234,7 +234,10 @@ void CommandAdvertisementHandler::handleEncryptedRC5Payload(ble_gap_evt_adv_repo
 	LOGd("encrypted RC5=[%u %u]", encryptedPayload[0], encryptedPayload[1]);
 	// TODO: can decrypt to same buffer?
 	uint16_t decryptedPayload[2];
-	EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(uint16_t) * 2, decryptedPayload, sizeof(decryptedPayload)); // Can't use sizeof(encryptedPayload) as that returns size of pointer.
+	bool success = EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(uint16_t) * 2, decryptedPayload, sizeof(decryptedPayload)); // Can't use sizeof(encryptedPayload) as that returns size of pointer.
+	if (!success) {
+		return;
+	}
 	LOGd("decrypted RC5=[%u %u]", decryptedPayload[0], decryptedPayload[1]);
 
 	// TODO: overwrite the first byte of the payload, so that it contains the timestamp?

@@ -101,7 +101,10 @@ void BackgroundAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t
 #endif
 	// TODO: can decrypt to same buffer?
 	uint16_t decryptedPayload[2];
-	EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(encryptedPayload), decryptedPayload, sizeof(decryptedPayload));
+	bool success = EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(encryptedPayload), decryptedPayload, sizeof(decryptedPayload));
+	if (!success) {
+		return;
+	}
 #ifdef BACKGROUND_ADV_VERBOSE
 	LOGd("decrypted=[%u %u]", decryptedPayload[0], decryptedPayload[1]);
 #endif
