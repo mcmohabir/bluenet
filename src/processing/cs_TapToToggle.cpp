@@ -30,10 +30,10 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 	if (adv->dataSize != sizeof(evt_adv_background_payload_t)) {
 		return;
 	}
-//	evt_adv_background_payload_t* payload = (evt_adv_background_payload_t*)(adv->data);
-//	if (!BLEutil::isBitSet(payload->flags, 0)) {
-//		return;
-//	}
+	evt_adv_background_payload_t* payload = (evt_adv_background_payload_t*)(adv->data);
+	if (!BLEutil::isBitSet(payload->flags, 0)) {
+		return;
+	}
 
 	// Use index of entry with matching address, or else with lowest score.
 	uint8_t index = -1; // Index to use
