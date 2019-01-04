@@ -326,9 +326,10 @@ uint8 | flags | 3 | [Flags](#background_adv_flags).
 
 Bit | Name |  Description
 --- | --- | ---
-0 | Tap to toggle | Set to 1 when this phone has tap to toggle enabled.
+0 |  | 
 1 |  | 
-2 |  | 
+2 | Tap to toggle | Set to 1 when this phone has tap to toggle enabled.
+
 
 
 

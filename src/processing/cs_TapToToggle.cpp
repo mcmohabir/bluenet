@@ -31,7 +31,7 @@ void TapToToggle::handleBackgroundAdvertisement(evt_adv_background_t* adv) {
 		return;
 	}
 	evt_adv_background_payload_t* payload = (evt_adv_background_payload_t*)(adv->data);
-	if (!BLEutil::isBitSet(payload->flags, 0)) {
+	if (!BLEutil::isBitSet(payload->flags, 2)) {
 		return;
 	}
 

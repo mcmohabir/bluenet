@@ -147,7 +147,6 @@ void BackgroundAdvertisementHandler::handleBackgroundAdvertisement(evt_adv_backg
 	payload.profileId =  (decryptedPayload[1] >> (16-6-3)) & 0x07;
 	payload.rssiOffset = (decryptedPayload[1] >> (16-6-3-4)) & 0x0F;
 	payload.flags =      (decryptedPayload[1] >> (16-6-3-4-3)) & 0x07;
-	payload.flags = payload.flags << 5; // So that the first bit is bit 0.
 	backgroundAdvertisement->data = (uint8_t*)(&payload);
 	backgroundAdvertisement->dataSize = sizeof(payload);
 	adjustRssi(backgroundAdvertisement, payload);
