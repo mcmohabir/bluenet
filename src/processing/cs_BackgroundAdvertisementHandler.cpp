@@ -156,7 +156,7 @@ void BackgroundAdvertisementHandler::handleBackgroundAdvertisement(evt_adv_backg
 
 void BackgroundAdvertisementHandler::adjustRssi(evt_adv_background_t* backgroundAdvertisement, const evt_adv_background_payload_t& payload) {
 	int16_t rssi = backgroundAdvertisement->rssi;
-	rssi += ((int16_t)payload.rssiOffset - 8) * 4;
+	rssi += ((int16_t)payload.rssiOffset - 8) * 2;
 	if (rssi > -1) {
 		rssi = -1;
 	}
