@@ -15,6 +15,8 @@
 #include "processing/cs_CommandHandler.h"
 #include "storage/cs_State.h"
 
+//#define COMMAND_ADV_VERBOSE
+
 CommandAdvertisementHandler::CommandAdvertisementHandler() {
 	EventDispatcher::getInstance().addListener(this);
 }
@@ -52,11 +54,14 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		return;
 	}
 
+#ifdef COMMAND_ADV_VERBOSE
 	logSerial(SERIAL_DEBUG, "16bit services: ");
 	BLEutil::printArray(services16bit.data, services16bit.len);
-
+#endif
+#ifdef COMMAND_ADV_VERBOSE
 	logSerial(SERIAL_DEBUG, "128bit services: ");
 	BLEutil::printArray(services128bit.data, services128bit.len); // Received as uint128, so bytes are reversed.
+#endif
 
 	if (services16bit.len < (CMD_ADV_NUM_SERVICES_16BIT * sizeof(uint16_t))) {
 		return;
@@ -71,7 +76,9 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	// Fill the nonce with the service data in the correct order.
 	for (int i=0; i < CMD_ADV_NUM_SERVICES_16BIT; ++i) {
 		uint16_t serviceUuid = ((uint16_t*)services16bit.data)[i];
+#ifdef COMMAND_ADV_VERBOSE
 		LOGd("uuid=%u", serviceUuid);
+#endif
 		uint8_t sequence = (serviceUuid >> (16-2)) & 0x0003;
 		foundSequences[sequence] = true;
 		switch (sequence) {
@@ -106,6 +113,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 		}
 	}
 
+#ifdef COMMAND_ADV_VERBOSE
 //	uint8_t* pHeader = (uint8_t*)&header;
 //	LOGd("header pointer=%p size=%u", pHeader, sizeof(header));
 //	_logSerial(SERIAL_DEBUG, "data=");
@@ -126,6 +134,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	LOGd("protocol=%u sphereId=%u accessLevel=%u", header.protocol, header.sphereId, header.accessLevel);
 //	logSerial(SERIAL_DEBUG, "nonce: ");
 //	BLEutil::printArray(nonce, sizeof(nonce));
+#endif
 
 	data_t nonceData;
 	nonceData.data = nonce;
@@ -171,8 +180,10 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 	if (!EncryptionHandler::getInstance().decryptBlockCTR(encryptedPayload.data, encryptedPayload.len, decryptedData, 16, accessLevel, nonce.data, nonce.len)) {
 		return false;
 	}
+#ifdef COMMAND_ADV_VERBOSE
 	logSerial(SERIAL_DEBUG, "decrypted data: ");
 	BLEutil::printArray(decryptedData, 16);
+#endif
 
 	uint32_t validationTimestamp = *((uint32_t*)decryptedData);
 	uint32_t timestamp;
@@ -231,14 +242,18 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(const CommandAdv
 }
 
 void CommandAdvertisementHandler::handleEncryptedRC5Payload(ble_gap_evt_adv_report_t* advReport, const CommandAdvertisementHeader& header, uint16_t encryptedPayload[2]) {
+#ifdef COMMAND_ADV_VERBOSE
 	LOGd("encrypted RC5=[%u %u]", encryptedPayload[0], encryptedPayload[1]);
+#endif
 	// TODO: can decrypt to same buffer?
 	uint16_t decryptedPayload[2];
 	bool success = EncryptionHandler::getInstance().RC5Decrypt(encryptedPayload, sizeof(uint16_t) * 2, decryptedPayload, sizeof(decryptedPayload)); // Can't use sizeof(encryptedPayload) as that returns size of pointer.
 	if (!success) {
 		return;
 	}
+#ifdef COMMAND_ADV_VERBOSE
 	LOGd("decrypted RC5=[%u %u]", decryptedPayload[0], decryptedPayload[1]);
+#endif
 
 	// TODO: overwrite the first byte of the payload, so that it contains the timestamp?
 

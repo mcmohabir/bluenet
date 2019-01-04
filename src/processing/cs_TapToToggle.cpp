@@ -13,6 +13,8 @@
 #include "util/cs_Utils.h"
 #include "storage/cs_Settings.h"
 
+//#define T2T_VERBOSE
+
 TapToToggle::TapToToggle() {
 	Settings::getInstance().get(CONFIG_T2T_SCORE_INCREMENT, &scoreIncrement, false);
 	Settings::getInstance().get(CONFIG_T2T_SCORE_THRESHOLD, &scoreThreshold, false);
@@ -84,7 +86,9 @@ void TapToToggle::tick() {
 	if (timeoutCounter) {
 		timeoutCounter--;
 	}
+#ifdef T2T_VERBOSE
 	LOGd("scores=%u %u %u", list[0].score, list[1].score, list[2].score)
+#endif
 }
 
 void TapToToggle::handleEvent(uint16_t evt, void* data, uint16_t length) {
