@@ -287,11 +287,12 @@ void UartProtocol::handleMsg(uart_handle_msg_data_t* msgData) {
 		if (header->size < 1) { break; }
 		EventDispatcher::getInstance().dispatch(EVT_ENABLE_MESH, payload, 1);
 		break;
-	case UART_OPCODE_RX_GET_ID:
+	case UART_OPCODE_RX_GET_ID: {
 		uint16_t crownstoneId = 0;
 		Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &crownstoneId);
 		writeMsg(UART_OPCODE_TX_OWN_ID, (uint8_t*)&crownstoneId, sizeof(crownstoneId));
 		break;
+	}
 	case UART_OPCODE_RX_GET_MAC:
 		uint32_t err_code;
 		ble_gap_addr_t address;
