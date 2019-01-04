@@ -431,7 +431,7 @@ void Crownstone::configureAdvertisement() {
 	// Only in normal mode the service data is filled with the state
 	if (opMode == OPERATION_MODE_NORMAL) {
 		// read crownstone id from storage
-		uint16_t crownstoneId;
+		uint16_t crownstoneId = 0;
 		_settings->get(CONFIG_CROWNSTONE_ID, &crownstoneId);
 		LOGi("Set crownstone id to %u", crownstoneId);
 

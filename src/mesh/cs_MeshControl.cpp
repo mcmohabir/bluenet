@@ -35,7 +35,9 @@ MeshControl::MeshControl() : _myCrownstoneId(0) {
 }
 
 void MeshControl::init() {
-	Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &_myCrownstoneId);
+	uint16_t crownstoneId = 0;
+	Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &crownstoneId);
+	_myCrownstoneId = crownstoneId;
 
 	LOGd("Keep alive msg: size=%d items=%d", sizeof(keep_alive_message_t), KEEP_ALIVE_SAME_TIMEOUT_MAX_ITEMS);
 	LOGd("State msg: size=%d items=%d", sizeof(state_message_t), MAX_STATE_ITEMS);
@@ -537,7 +539,7 @@ bool MeshControl::handleControlCommand(control_mesh_message_t* controlMsg, uint1
 		//!       Also: how is this a copy?
 		enable_scanner_message_payload_t scannerPayload = *pl;
 
-		uint16_t crownstoneId;
+		uint16_t crownstoneId = 0;
 		Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &crownstoneId);
 		if (crownstoneId != 0) {
 			scannerPayload.delay = crownstoneId * 1000;
@@ -553,7 +555,7 @@ bool MeshControl::handleControlCommand(control_mesh_message_t* controlMsg, uint1
 		//! need to delay the sending of the service data or all devices will write their
 		//! service data to the mesh at the same time. so solution for now, use crownstone
 		//! id (if set) as the delay
-		uint16_t crownstoneId;
+		uint16_t crownstoneId = 0;
 		Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &crownstoneId);
 		uint32_t delay;
 		if (crownstoneId != 0) {

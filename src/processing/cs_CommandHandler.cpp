@@ -829,7 +829,7 @@ ERR_CODE CommandHandler::handleCmdAdvMultiSwitch(buffer_ptr_t buffer, const uint
 		LOGe(FMT_WRONG_PAYLOAD_LENGTH, size);
 		return ERR_WRONG_PAYLOAD_LENGTH;
 	}
-	uint8_t id;
+	uint16_t id = 0;
 	Settings::getInstance().get(CONFIG_CROWNSTONE_ID, &id);
 
 	for (int i=0; i<count; ++i) {

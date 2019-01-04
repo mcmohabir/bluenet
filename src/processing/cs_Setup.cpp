@@ -53,7 +53,8 @@ ERR_CODE Setup::handleCommand(uint8_t* data, uint16_t size) {
 	// Save all settings.
 	// Since all settings are at the same flash page, we only store to persistent storage at the end.
 	Settings& settings = Settings::getInstance();
-	settings.set(CONFIG_CROWNSTONE_ID,       &(setupData->id),                  false, sizeof(setupData->id));
+	uint16_t crownstoneId = setupData->id;
+	settings.set(CONFIG_CROWNSTONE_ID,       &crownstoneId,                     false, sizeof(crownstoneId));
 	settings.set(CONFIG_KEY_ADMIN,           setupData->adminKey,               false, sizeof(setupData->adminKey));
 	settings.set(CONFIG_KEY_MEMBER,          setupData->memberKey,              false, sizeof(setupData->memberKey));
 	settings.set(CONFIG_KEY_GUEST,           setupData->guestKey,               false, sizeof(setupData->guestKey));
