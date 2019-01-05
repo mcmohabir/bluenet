@@ -8,6 +8,8 @@
 
 #define CROWNSTONE_COMPANY_ID                    0x038E
 
+#define GRID_FREQ_HZ                             50 // Can be 50 or 60
+
 // size of the buffer used for characteristics
 //#define GENERAL_BUFFER_SIZE                      300
 
@@ -149,11 +151,20 @@
 #define CS_ADC_IRQ_PRIORITY                      APP_IRQ_PRIORITY_HIGH
 #define CS_ADC_IRQ                               SAADC_IRQHandler
 
-
+#if GRID_FREQ_HZ == 50
 #define CS_ADC_SAMPLE_INTERVAL_US                200 // 100 samples per period of 50Hz wave
+#elif GRID_FREQ_HZ == 60
+#define CS_ADC_SAMPLE_INTERVAL_US                196 // 170 samples per period of 60Hz wave
+#endif
+
 #define CS_ADC_MAX_PINS                          2
 #define CS_ADC_NUM_BUFFERS                       4
+
+#if GRID_FREQ_HZ == 50
 #define CS_ADC_BUF_SIZE                          (CS_ADC_MAX_PINS * 20000 / CS_ADC_SAMPLE_INTERVAL_US) // Make size so it fills up 20ms of data.
+#elif GRID_FREQ_HZ == 60
+#define CS_ADC_BUF_SIZE                          (CS_ADC_MAX_PINS * 16667 / CS_ADC_SAMPLE_INTERVAL_US) // Make it so it fills up 16.667ms of data (for 60Hz)
+#endif
 
 #define POWER_SAMPLE_BURST_NUM_SAMPLES           (20000/CS_ADC_SAMPLE_INTERVAL_US) // Number of voltage and current samples per burst
 
@@ -196,7 +207,11 @@
 
 #define SWITCHCRAFT_THRESHOLD                    (500000) // Threshold for switch recognition (float).
 
+#if GRID_FREQ_HZ == 50
 #define PWM_PERIOD                               10000L // Interval in us: 1/10000e-6 = 100 Hz
+#elif GRID_FREQ_HZ == 60
+#define PWM_PERIOD                               8333L // Interval in us: 1/8333e-6 = 120 Hz
+#endif
 
 #define KEEP_ALIVE_INTERVAL                      (2 * 60) // 2 minutes, in seconds
 

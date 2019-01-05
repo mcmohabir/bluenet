@@ -274,7 +274,11 @@ void PowerSampling::powerSampleAdcDone(cs_adc_buffer_id_t bufIndex) {
 	power.currentIndex = CURRENT_CHANNEL_IDX;
 	power.numChannels = 2;
 	power.sampleIntervalUs = CS_ADC_SAMPLE_INTERVAL_US;
+#if GRID_FREQ_HZ == 50
 	power.acPeriodUs = 20000;
+#elif GRID_FREQ_HZ == 60
+	power.acPeriodUs = 16667; // 60Hz
+#endif
 	
 	cs_adc_buffer_id_t prevIndex = InterleavedBuffer::getInstance().getPrevious(bufIndex);
 
