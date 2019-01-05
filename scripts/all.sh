@@ -40,20 +40,8 @@ cs_succ "Upload DONE"
 ### Bootloader
 ###################
 
-if [ -d "${BLUENET_BOOTLOADER_DIR}" ]; then
-	cs_info "Build bootloader ..."
-	${BLUENET_BOOTLOADER_DIR}/scripts/all.sh $target
-
-	checkError
-	cs_succ "Build DONE"
-else
-	cs_err "BLUENET_BOOTLOADER_DIR not defined, skip bootloader!"
-fi
-
-cs_info "Upload bootloader"
-
+cs_info "Compile and upload bootloader"
 $path/firmware.sh -c bootloader $targetoption
-
 checkError
 
 cs_succ "Success!!"
