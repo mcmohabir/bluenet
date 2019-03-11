@@ -60,6 +60,7 @@ void CommandAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t* a
 	}
 
 #ifdef COMMAND_ADV_VERBOSE
+	LOGd("rssi=%i scan response=%u", advReport->rssi, advReport->scan_rsp);
 	logSerial(SERIAL_DEBUG, "16bit services: ");
 	BLEutil::printArray(services16bit.data, services16bit.len);
 #endif

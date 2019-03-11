@@ -47,6 +47,7 @@ void BackgroundAdvertisementHandler::parseAdvertisement(ble_gap_evt_adv_report_t
 	servicesMask = manufacturerData.data + BACKGROUND_SERVICES_MASK_HEADER_LEN;
 
 #ifdef BACKGROUND_ADV_VERBOSE
+	LOGd("rssi=%i scan response=%u", advReport->rssi, advReport->scan_rsp);
 	logSerial(SERIAL_DEBUG, "servicesMask: ");
 	BLEutil::printArray(servicesMask, BACKGROUND_SERVICES_MASK_LEN);
 #endif
