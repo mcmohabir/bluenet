@@ -196,7 +196,7 @@ bool CommandAdvertisementHandler::handleEncryptedCommandPayload(ble_gap_evt_adv_
 	BLEutil::printArray(decryptedData, 16);
 #endif
 
-	uint32_t validationTimestamp = (decryptedData[0] << 24) && (decryptedData[1] << 16) && (decryptedData[2] << 8) && (decryptedData[3] << 0);
+	uint32_t validationTimestamp = (decryptedData[0] << 0) | (decryptedData[1] << 8) | (decryptedData[2] << 16) | (decryptedData[3] << 24);
 	uint32_t timestamp;
 	State::getInstance().get(STATE_TIME, timestamp);
 	uint8_t type = decryptedData[4];
