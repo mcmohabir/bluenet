@@ -1145,16 +1145,16 @@ void csStackOnScan(void * p_event_data, uint16_t event_size) {
 	scan.channel = advReport->ch_index;
 	scan.dataSize = advReport->data.len;
 	scan.data = advReport->data.p_data;
-	uint16_t type = *((uint16_t*)&(advReport->type));
+//	uint16_t type = *((uint16_t*)&(advReport->type));
 
-	const uint8_t* addr = scan.address;
+//	const uint8_t* addr = scan.address;
 	const uint8_t* p = scan.data;
 	if (p[0] == 0x15 && p[1] == 0x16 && p[2] == 0x01 && p[3] == 0xC0 && p[4] == 0x05) {
 //		if (p[1] == 0xFF && p[2] == 0xCD && p[3] == 0xAB) {
 //		if (advReport->peer_addr.addr_type == BLE_GAP_ADDR_TYPE_PUBLIC && addr[5] == 0xE7 && addr[4] == 0x09 && addr[3] == 0x62) { // E7:09:62:02:91:3D
 //		if (addr[5] == 0xE7 && addr[4] == 0x09 && addr[3] == 0x62) { // E7:09:62:02:91:3D
-		LOGi("Stack scan: address=%02X:%02X:%02X:%02X:%02X:%02X addrType=%u type=%u rssi=%i chan=%u", addr[5], addr[4], addr[3], addr[2], addr[1], addr[0], advReport->peer_addr.addr_type, type, scan.rssi, scan.channel);
-		LOGd("  adv_type=%u len=%u data=", type, scan.dataSize);
+//		LOGi("Stack scan: address=%02X:%02X:%02X:%02X:%02X:%02X addrType=%u type=%u rssi=%i chan=%u", addr[5], addr[4], addr[3], addr[2], addr[1], addr[0], advReport->peer_addr.addr_type, type, scan.rssi, scan.channel);
+//		LOGd("  adv_type=%u len=%u data=", type, scan.dataSize);
 		BLEutil::printArray(scan.data, scan.dataSize);
 	}
 	event_t event(CS_TYPE::EVT_DEVICE_SCANNED, (void*)&scan, sizeof(scan));
