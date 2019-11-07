@@ -24,14 +24,19 @@ union cs_variant_t {
 
 inline std::string get_hardware_revision(void) {
 
-	// get Production run
-	std::string production_run = "0000";
+	uint32_t uicrProdcution = NRF_UICR->CUSTOMER[UICR_BOARD_INDEX + 3];
+	uint8_t housingId   = uicrProdcution & 0xFF000000;
+	uint8_t prodWeek    = uicrProdcution & 0x00FF0000;
+	uint8_t prodYear    = uicrProdcution & 0x0000FF00;
 
-	// get Housing ID
-	std::string housing_id = "0000";
+//	// get Production run
+//	std::string production_run = "0000";
+//
+//	// get Housing ID
+//	std::string housing_id = "0000";
 
 	// reserved
-	std::string reserved = "00000000";
+	std::string reserved = "0000000000";
 
 	// AAB0 is stored as 0x41414230
 	cs_variant_t variant;
@@ -67,8 +72,16 @@ inline std::string get_hardware_revision(void) {
 	}
 
 	char hardware_revision[34];
-	sprintf(hardware_revision, "%11.11s%.4s%.4s%.8s%.6s", get_hardware_version(), production_run.c_str(),
-			housing_id.c_str(), reserved.c_str(), nordic_chip_version);
+//	sprintf(hardware_revision, "%11.11s%.4s%.4s%.8s%.6s", get_hardware_version(), production_run.c_str(),
+//			housing_id.c_str(), reserved.c_str(), nordic_chip_version);
+	sprintf(hardware_revision, "%11.11s%02X%02X%02X%10.10s%6.6s",
+			get_hardware_version(),
+			prodYear,
+			prodWeek,
+			housingId,
+			reserved.c_str(),
+			nordic_chip_version
+	);
 	return std::string(hardware_revision, 34);
 }
 

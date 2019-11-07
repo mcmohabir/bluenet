@@ -45,6 +45,41 @@ static inline const char* get_hardware_version() {
 //	LOGi("UICR");
 //	BLEutil::printArray((uint8_t*)NRF_UICR->CUSTOMER, 128);
 
+//	Plug 1B2C:
+//	10001084 = DE 05 00 00 -> board = 1502
+//	10001088 = 02 01 01 FF -> prod type = 2 (plug), market = 1 (EU), prod fam = 1 (cs), reserved = FF
+//	1000108C = 02 00 01 FF -> patch = 2, minor = 0, major = 1, reserved = FF
+//	10001090 = 01 30 10 FF -> housing ID = 1, prod week = 48, prod year = 16, reserved = FF
+//
+//	Plug 1B2G:
+//	10001084 = E0 05 00 00 -> board = 1504
+//	10001088 = 02 01 01 FF -> prod type = 2 (plug), market = 1 (EU), prod fam = 1 (cs), reserved = FF
+//	1000108C = 00 03 01 FF -> patch = 0, minor = 3, major = 1, reserved = FF
+//	10001090 = 02 25 11 FF -> housing ID = 2, prod week = 37, prod year = 17, reserved = FF
+
+	uint32_t uicrGeneral = NRF_UICR->CUSTOMER[UICR_BOARD_INDEX + 1];
+	uint32_t uicrBoard   = NRF_UICR->CUSTOMER[UICR_BOARD_INDEX + 2];
+	if (uicrGeneral != 0xFFFFFFFF && uicrBoard != 0xFFFFFFFF) {
+		uint8_t prodType    = uicrGeneral & 0xFF000000;
+		uint8_t market      = uicrGeneral & 0x00FF0000;
+		uint8_t prodFamily  = uicrGeneral & 0x0000FF00;
+
+		uint8_t patch       = uicrBoard & 0xFF000000;
+		uint8_t minor       = uicrBoard & 0x00FF0000;
+		uint8_t major       = uicrBoard & 0x0000FF00;
+
+		char hardwareVersion[12];
+		sprintf(hardwareVersion, "%01X%02X%02X%02X%02X%02X",
+				prodFamily & 0x0F,
+				market,
+				prodType,
+				major,
+				minor,
+				patch
+		);
+		return hardwareVersion;
+	}
+
 	// CROWNSTONE BUILTINS
 	if (hardwareBoard == ACR01B1A)  return "10103000100";
 	if (hardwareBoard == ACR01B1B)  return "10103000200";
