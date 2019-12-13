@@ -5,7 +5,8 @@
 /** 
  * Arduino command.
  */
-void ARDUINO_HANDLER arduinoCommand() {
-	LOGd("Arduino command");
+static void arduinoCommand(const char value) {
+	LOGd("Arduino command %i", value);
 }
 
+REGISTER_ARDUINO_HANDLER(arduinoCommand);

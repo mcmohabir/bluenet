@@ -187,7 +187,7 @@ SECTIONS
   .arduino_handlers :
   {
     PROVIDE(__start_arduino_handlers = .);
-    KEEP(*(SORT(.arduino_handlers.*)))
+    KEEP(*(SORT(.arduino_handlers*)))
     PROVIDE(__stop_arduino_handlers = .);
   } > FLASH
 } INSERT AFTER .text

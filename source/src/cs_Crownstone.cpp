@@ -140,7 +140,12 @@ Crownstone::Crownstone(boards_config_t& board) :
 	}
 
 #ifdef ARDUINO
-	arduinoCommand();
+	//arduino_init_all();
+	struct arduino_handler *iter = &__start_arduino_handlers;
+	for (; iter < &__stop_arduino_handlers; ++iter) {
+		LOGd("Call handler %s", iter->name);
+		iter->f(8);
+	}
 #endif
 };
 
