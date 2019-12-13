@@ -149,6 +149,8 @@ ADD_DEFINITIONS("-DCHAR_STATE=${CHAR_STATE}")
 
 ADD_DEFINITIONS("-DMESH_SCANNER=${MESH_SCANNER}")
 
+ADD_DEFINITIONS("-DARDUINO=${ARDUINO}")
+
 # Obtain variables to be used for the compiler
 SET(NRF5_DIR                                    "${NRF5_DIR}"                   CACHE STRING "Nordic SDK Directory" FORCE)
 SET(NORDIC_SDK_VERSION                          "${NORDIC_SDK_VERSION}"             CACHE STRING "Nordic SDK Version" FORCE)

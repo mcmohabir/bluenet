@@ -139,7 +139,9 @@ Crownstone::Crownstone(boards_config_t& board) :
 		_powerSampler = &PowerSampling::getInstance();
 	}
 
+#ifdef ARDUINO
 	arduinoCommand();
+#endif
 };
 
 /**
