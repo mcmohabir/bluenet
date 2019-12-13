@@ -61,6 +61,8 @@
 #include <array> // DEBUG 
 #include <util/cs_Hash.h> // DEBUG
 
+#include <arduino/cs_Arduino.h>
+
 extern "C" {
 #include <nrf_nvmc.h>
 }
@@ -137,6 +139,7 @@ Crownstone::Crownstone(boards_config_t& board) :
 		_powerSampler = &PowerSampling::getInstance();
 	}
 
+	arduinoCommand();
 };
 
 /**

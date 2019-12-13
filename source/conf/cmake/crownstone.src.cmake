@@ -66,6 +66,10 @@ LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/processing/cs_MultiSwitchHandler.cpp")
 # should be only when creating iBeacon
 LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/ble/cs_iBeacon.cpp")
 
+IF(ARDUINO AND "${ARDUINO}" STRGREATER "0") 
+	LIST(APPEND FOLDER_SOURCE "${SOURCE_DIR}/arduino/cs_Arduino.c")
+ENDIF()
+
 IF (MESHING AND "${MESHING}" STRGREATER "0" AND BUILD_MESHING AND "${BUILD_MESHING}" STREQUAL "0")
 	MESSAGE(FATAL_ERROR "Need to set BUILD_MESHING=1 if MESHING should be enabled!")
 ENDIF()

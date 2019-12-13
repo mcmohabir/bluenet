@@ -184,6 +184,12 @@ SECTIONS
     KEEP(*(SORT(.nrf_mesh_flash.*)))
     PROVIDE(__stop_nrf_mesh_flash = .);
   } > FLASH
+  .arduino_handlers :
+  {
+    PROVIDE(__start_arduino_handlers = .);
+    KEEP(*(SORT(.arduino_handlers.*)))
+    PROVIDE(__stop_arduino_handlers = .);
+  } > FLASH
 } INSERT AFTER .text
 
 INCLUDE "nrf_common.ld"
